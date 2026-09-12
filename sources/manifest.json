@@ -1,0 +1,70 @@
+[
+  {
+    "lecture": 1,
+    "title": "What are Agents and How Do They Work?",
+    "video_id": "UwfjzyLnvMg",
+    "url": "https://www.youtube.com/watch?v=UwfjzyLnvMg",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1648,
+    "last_caption_end_seconds": 4073.76,
+    "retrieved_utc": "2026-09-12T14:52:21.388541+00:00"
+  },
+  {
+    "lecture": 2,
+    "title": "Tool Use for Language Model Agents",
+    "video_id": "jXChFB4JSyw",
+    "url": "https://www.youtube.com/watch?v=jXChFB4JSyw",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1335,
+    "last_caption_end_seconds": 3443.44,
+    "retrieved_utc": "2026-09-12T14:52:22.899474+00:00"
+  },
+  {
+    "lecture": 3,
+    "title": "Long Context Modeling for Agents",
+    "video_id": "AiwCCvFW1uE",
+    "url": "https://www.youtube.com/watch?v=AiwCCvFW1uE",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1687,
+    "last_caption_end_seconds": 4504.76,
+    "retrieved_utc": "2026-09-12T14:52:24.215044+00:00"
+  },
+  {
+    "lecture": 4,
+    "title": "Memory and Skills for Agents",
+    "video_id": "6zigF2a-2Pw",
+    "url": "https://www.youtube.com/watch?v=6zigF2a-2Pw",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1823,
+    "last_caption_end_seconds": 4522.88,
+    "retrieved_utc": "2026-09-12T14:52:25.343470+00:00"
+  }
+]
