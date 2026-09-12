@@ -71,10 +71,64 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p><strong>Capability-based authorization</strong> grants explicit rights to perform classes of operations. Let $\operatorname{cap}(u)$ be the rights granted to this run and $\operatorname{req}(\tau,x)$ the rights required by a call. The harness admits the call only when $\operatorname{req}(\tau,x)\subseteq\operatorname{cap}(u)$. A broad <code>shell</code> capability—permission to execute operating-system commands—is hard to reason about because its required rights depend on the command and environment. Sandboxing, <strong>directory allowlists</strong> (permitted filesystem paths), <strong>network egress restrictions</strong> (permitted outbound destinations), and narrow <strong>wrappers</strong> (programs that expose only selected operations) make the effective rights more inspectable. The model may argue that an action is useful. That argument does not enlarge $\operatorname{cap}(u)$.</p>
 <p>An endpoint described by <strong>OpenAPI</strong>, a format for documenting Hypertext Transfer Protocol (HTTP) service operations, a <strong>Model Context Protocol (MCP)</strong> tool, which exposes agent-facing operations through a standard client-server protocol, and a local shell command can all have such contracts. Their enforcement points differ. OpenAPI specifies operation structure. <strong>JSON Schema</strong> provides rules for validating the shape of JSON values. Neither establishes user consent or correct business semantics. MCP supplies discovery and tool invocation. Its server still has to enforce the upstream API's permissions. <a href="https://openai.com/index/equip-responses-api-computer-environment/">OpenAI's account of equipping the Responses API with a computer environment</a> describes the <strong>callback boundary</strong>: with custom tools, the API yields a proposal and the client-side harness executes it. An implementation that treats the returned call as already authorized collapses that boundary.</p>
 <p>Let $id$ be a unique call ID, $\tau$ the selected tool, $x$ its argument, and $\kappa$ an optional <strong>idempotency key</strong>: a server-recognized identifier that makes repeated submissions of one logical operation count as one transaction. Represent a call by $(id,\tau,x,\kappa)$. If a network timeout occurs after execution, a blind retry can duplicate a purchase or email. For a side-effecting operation, either the downstream service must honor $\kappa$, or the harness must <strong>reconcile</strong> the state by querying an authoritative record before retrying. Record tool version, time, arguments (with secret fields removed), outcome, and verification evidence. A completed network exchange does not, by itself, confirm the postcondition. The harness needs evidence about the state the downstream service actually reached.</p>
+<p>The admission rule is implemented in <a href="agent_lab/tools.py">tools.py</a>. <code>spec.fields</code> maps argument names to required Python types. <code>spec.effects</code> is the set $\operatorname{req}(\tau,x)$ for this simplified tool specification; <code>authority.effects</code> is $\operatorname{cap}(u)$. <code>spec.precondition</code> is a function of the proposed call and previously recorded observations. The code rejects an unknown tool, an altered argument shape, an ungranted effect, or missing evidence <em>before</em> calling the handler.</p>
+<pre><code class="language-python">def admit(self, call, authority, evidence):
+    spec = self._tools.get(call.name)
+    if spec is None:
+        raise CallRejected(&quot;unknown tool&quot;)
+    if set(call.arguments) != set(spec.fields):
+        raise CallRejected(&quot;argument fields do not match schema&quot;)
+    for field, expected_type in spec.fields.items():
+        if type(call.arguments[field]) is not expected_type:
+            raise CallRejected(f&quot;wrong type for {field}&quot;)
+    if not spec.effects &lt;= authority.effects:
+        raise CallRejected(&quot;effect not authorized&quot;)
+    if not spec.precondition(call, evidence):
+        raise CallRejected(&quot;precondition lacks trusted evidence&quot;)
+    return spec
+</code></pre>
+<p>The order example registers <code>cancel_order</code> with the effect <code>order.cancel</code> and with a precondition requiring a matching <code>get_order_status</code> observation. This client-side check establishes <em>admissibility from evidence</em>. It does not establish that the order remains unshipped. In <a href="agent_lab/order_demo.py">order_demo.py</a>, the service therefore holds a lock while checking its current status and revision and changing the state:</p>
+<pre><code class="language-python">with self._lock:
+    old = self._committed.get(key)
+    if old is not None:
+        old_order_id, old_revision, old_result = old
+        if (old_order_id, old_revision) != (
+            order_id, expected_revision
+        ):
+            raise ToolFailure(
+                &quot;idempotency key reused with new arguments&quot;
+            )
+        return old_result
+    if self.order.status != &quot;unshipped&quot;:
+        raise ToolFailure(&quot;order no longer unshipped&quot;)
+    if self.order.revision != expected_revision:
+        raise ToolFailure(&quot;status observation is stale&quot;)
+    self.order.status = &quot;cancelled&quot;
+    self.order.revision += 1
+</code></pre>
+<p><code>expected_revision</code> is the revision number read from the status service. The equality check implements <strong>optimistic concurrency control</strong>: a write based on an older revision is rejected. The lock makes the check and update atomic in this in-memory example. A real distributed service needs its own atomic database transaction or conditional update; a client-process lock cannot protect a remote database. The committed-request ledger keyed by $\kappa$ prevents a repeated <em>identical</em> cancellation from changing state twice. The ledger itself is only in memory and would need durable storage in a service that survives restarts.</p>
 <p>Suppose <code>create_grocery_cart(items)</code> times out after the server creates cart <code>C17</code>. The client has observed no result, but the server has changed state. A blind retry might create a second cart <code>C18</code>. If the service supports idempotency, the harness resends the same key $\kappa$ and the same arguments; the service should return the transaction associated with <code>C17</code>. If it does not, the harness queries the user's active carts and reconciles the intended item list before issuing another write. This trace explains why <code>timeout</code> and <code>not committed</code> are different states.</p>
 <h3 id="retry-semantics-and-exactly-once-illusions">Retry semantics and exactly-once illusions</h3>
 <p>Classify calls as <strong>read-only</strong> (no intended state change), <strong>idempotent writes</strong> (repetition has the same final state as one execution), or <strong>non-idempotent writes</strong>. For a deterministic successful state update $f_x(s)$ caused by fixed argument $x$ in state $s$, idempotence means $f_x(f_x(s))=f_x(s)$. This equation concerns the state update, not the tool's returned message or error. <code>set_status(order, "cancelled")</code> may be idempotent because repeating it leaves the same final status. <code>charge_card(amount)</code> usually is not: repeating it can create a second charge. A network timeout means the client does not know whether the server <strong>committed</strong>, or made durable, the action. The result is an <em>epistemic</em> <code>unknown</code>: the client lacks knowledge of the downstream outcome. It has no evidence that the operation failed. For non-idempotent operations, use a server-recognized key $\kappa$ or query the authoritative record before retrying. Even with a key, test its <strong>retention window</strong>, the interval during which repeated requests are recognized as duplicates, and the server's exact matching rule.</p>
 <p>The event log should store <code>call_id</code>, $\kappa$, a <strong>request hash</strong> (a compact fingerprint of the submitted arguments), an attempt number, a <strong>transport outcome</strong> (whether the network exchange completed), and a downstream transaction identifier. On restart, the harness can reconcile an unfinished call rather than asking the model to guess. Model text is an unreliable substitute for an external side-effect ledger.</p>
+<p>The runnable example distinguishes a <em>known pre-commit rejection</em> from an outcome whose state is unknown to the caller. <code>ToolFailure</code> represents the first case, and <code>OutcomeUnknown</code> represents the second. An unexpected handler exception is conservatively classified as <code>unknown</code>: after an arbitrary exception, the harness cannot prove that no external effect occurred. The corresponding <a href="agent_lab/tools.py">tool adapter</a> turns both classes into observations rather than silently treating an exception as success.</p>
+<pre><code class="language-python">try:
+    data = spec.handler(call)
+    return Observation(call.call_id, call.name, &quot;ok&quot;, data)
+except OutcomeUnknown as exc:
+    return Observation(
+        call.call_id, call.name, &quot;unknown&quot;, {&quot;error&quot;: str(exc)}
+    )
+except ToolFailure as exc:
+    return Observation(
+        call.call_id, call.name, &quot;error&quot;, {&quot;error&quot;: str(exc)}
+    )
+except Exception as exc:
+    return Observation(
+        call.call_id, call.name, &quot;unknown&quot;, {&quot;error&quot;: str(exc)}
+    )
+</code></pre>
+<p>In the simulated timeout, <code>OrderService.cancel</code> changes the state and then raises <code>OutcomeUnknown</code>. The next proposal is a status read, not another cancellation. The final-answer verifier checks the service's current state. This is an executable counterexample to the mistaken implication <code>timeout ⇒ no commit</code>.</p>
 <h2 id="3-grammar-constrained-generation-2700">3. Grammar-constrained generation <a href="https://www.youtube.com/watch?v=jXChFB4JSyw&amp;t=1620s">27:00</a></h2>
 <p>JSON Schema describes allowed argument forms. <strong>Grammar-constrained decoding</strong> blocks next tokens that cannot lead to a complete output in a specified formal language, such as a restricted JSON format. A <strong>finite-state machine</strong> has only finitely many internal states. A <strong>stack-based parser</strong> additionally records a potentially unbounded sequence of open structures. Arbitrarily nested JSON requires the latter in the general case. <a href="https://arxiv.org/abs/2411.15100">XGrammar</a> describes preparing a grammar in advance and maintaining parser stacks during token generation.</p>
 <p>Let $L$ be the set of complete valid outputs, $p$ the output prefix generated so far, $v$ a candidate next token, and $z$ any possible continuation. Juxtaposition $pvz$ means concatenating these strings. Candidate $v$ is allowed when some $z$ makes $pvz\in L$. Let $P(v\mid p)$ be the model's original next-token probability, let $w$ range over all candidate tokens, and let $\mathbf 1[A]$ equal one if condition $A$ is true and zero otherwise. The symbol $\exists$ means “there exists,” and $\sum_w$ sums over candidate tokens. Let $P&#x27;$ denote the constrained distribution obtained by zeroing forbidden tokens and renormalizing the remaining probabilities:</p>
@@ -90,12 +144,12 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p>Represent the $n$ calls by a <strong>directed acyclic graph</strong>. Its nodes $V=\{1,\ldots,n\}$ are calls. An arrow $i\to j$ means that call $j$ requires the result or side effect of call $i$. The graph has no directed cycles. Let $d_i$ be call $i$'s duration and $\mathcal P$ the set of dependency paths, each a sequence of calls linked by arrows. The <strong>critical path</strong> is the path with greatest total duration. The notation $\sum_{i\in\gamma}d_i$ adds durations along path $\gamma$, and $\max$ selects the largest path sum. Any valid schedule, which respects all arrows, has latency at least $\max_{\gamma\in\mathcal P}\sum_{i\in\gamma}d_i$. Running every available call at once minimizes neither risk nor cost if calls share mutable state, <strong>rate limits</strong> (service-imposed request caps), or irreversible effects. Two writes to the same file may conflict even when their arguments are separately known.</p>
 <p>The dependency graph should include <em>conflict edges</em>, arrows that prevent simultaneous operations with incompatible effects, as well as data edges. For calls $i$ and $j$ with deterministic successful state-update functions $f_i$ and $f_j$, <strong>commutativity</strong> means $f_i(f_j(s))=f_j(f_i(s))$ for every relevant state $s$. If neither call depends on the other's result and their updates commute, concurrent execution may be safe with respect to final state. This condition is stronger than having disjoint arguments. Two reads of one file commute. A read and edit of that file may not commute because the read can see different content. Even writes to different files can conflict if a build or deployment observes one change without the other. If commutativity cannot be established, <strong>serialize</strong> the calls (run one after the other) or isolate their state. Concurrency is a correctness decision before it is a latency optimization.</p>
 <p>In the grocery case, two independent product searches can run concurrently. Cart creation depends on their product identifiers and must wait for both results. If two workers can write the same cart, impose an ordering or use a service operation with conflict detection. Otherwise, the final cart may omit one worker's items even when both calls return success. Parallel latency is bounded by the search dependency path, while correctness also depends on the cart's concurrency semantics.</p>
-<p>Python is a programming language. The following sketch takes <code>calls</code>, an iterable of call objects with unique <code>.id</code> fields, and <code>dispatch</code>, an asynchronous function that executes one call. <code>asyncio.gather</code> waits for all supplied operations and returns their results.</p>
+<p>Python is a programming language. The following extension takes <code>calls</code>, an iterable of <code>ToolCall</code> objects with unique <code>call_id</code> fields, and <code>dispatch</code>, an asynchronous function that executes one read-only call. <code>asyncio.gather</code> waits for all supplied operations and returns their results. It is separate from the sequential harness because that harness has no dependency scheduler or concurrent event-log merge rule.</p>
 <pre><code class="language-python">import asyncio
 
 async def run_independent(calls, dispatch):
     async def one(call):
-        return call.id, await dispatch(call)
+        return call.call_id, await dispatch(call)
     results = await asyncio.gather(*(one(c) for c in calls))
     return dict(results)  # IDs keep results attached to the right call.
 </code></pre>

@@ -24,6 +24,28 @@ $$\max_{z_1,\ldots,z_n}\sum_i v_i z_i\quad\text{subject to}\quad\sum_i\ell_i z_i
 
 This is a **knapsack model**: select valuable items under a size limit. It is incomplete because information can be complementary or contradictory. A test failure may be useful only when the relevant code is also available. An outdated instruction can even have negative value if the agent follows it. For a candidate context $c$, let $|c|$ be its token length, $P(\text{success}\mid c)$ the task-success probability when it is supplied, $\operatorname{cost}(c)$ its resource cost, and $\lambda\ge0$ the cost weight. Define $U(c)=P(\text{success}\mid c)-\lambda\operatorname{cost}(c)$ and $c^*=\arg\max_{|c|\le B_t}U(c)$, where $\arg\max$ selects a maximizing context. The true utility $U$ is unknown to the context builder. It must use approximate retrieval and then measure how well the agent continues with the selected context. Token count alone does not establish that the selection was good.
 
+The [companion selector](agent_lab/context.py) solves the additive, integer-cost form exactly for a small budget. `Candidate.tokens` represents $\ell_i$, `Candidate.value` represents $v_i$, and `budget` represents $B_t$. `best[c]` stores the best value and selected names with capacity $c$. Descending capacity prevents one item from being used twice. For three items with sizes $(6,3,3)$ and values $(8,5,5)$, the code selects the two smaller items under a six-unit budget; a greedy choice of the largest individual value would be worse.
+
+```python
+def select_items(candidates, budget):
+    if budget < 0:
+        raise ValueError("budget must be nonnegative")
+    best = [(0.0, ()) for _ in range(budget + 1)]
+    for item in candidates:
+        if item.tokens < 1:
+            raise ValueError("each candidate must cost at least one token")
+        for capacity in range(budget, item.tokens - 1, -1):
+            old_value, old_names = best[capacity - item.tokens]
+            new_value = old_value + item.value
+            if new_value > best[capacity][0]:
+                best[capacity] = (
+                    new_value, old_names + (item.name,)
+                )
+    return best[budget][1]
+```
+
+The additive value assumption and integer budget are deliberate simplifications. This selector is used for eligible memory items in Chapter 4. The current harness does not apply the knapsack rule to every tool schema or history event. Those inputs have separate inclusion policies, and hard constraints are retained without a value score.
+
 For the release repair, the publication prohibition should be a non-optional constraint on permitted actions, not merely one candidate item assigned an uncertain relevance score $v_i$. The recent failure log may have high diagnostic value but can be retained outside the prompt and retrieved by file location. The exact failing test and the changed files deserve a compact, current representation. This division separates an **invariant**, a condition required to hold throughout the run, from evidence that can be selected according to the immediate subtask.
 
 Context items also differ in authority. Trusted user and developer instructions, project rules, **tool schemas** (machine-readable input forms), retrieved documents, and raw tool outputs should carry **provenance**, a record of their source, and be separated in the assembled message. A retrieved webpage can inform an answer but cannot silently alter the **permission gate**, the component deciding which proposed actions may execute. If the same item is included in $c_t$ at every step, its token cost recurs on subsequent model calls. [Anthropic's context-engineering guidance](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) recommends concise persistent instructions and **just-in-time retrieval**, which loads details only when a task needs them. This policy can increase estimated value per token $v_i/\ell_i$. The full source remains available for later retrieval.
@@ -39,6 +61,23 @@ $$\operatorname{Attn}(Q,K,V)=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{
 The notation $O(f(n))$ means growth bounded above by a constant multiple of $f(n)$ for sufficiently large $n$. The $n\times n$ score matrix costs $O(n^2d_k)$ arithmetic in a straightforward prefill implementation. With a KV cache, one new token compares its query with roughly $n$ cached keys, costing $O(nd_k)$ attention arithmetic for that token. This does not make a full long generation linear in total length. Actual wall time also depends on optimized computation **kernels**, memory transfer speed, **batching** (processing several requests together), parallelism, and the model's non-attention layers.
 
 Let $B_{KV}$ be the KV-cache size in bytes, $L$ the number of model layers, and $n$ the number of stored tokens. Let $h_{KV}$ be the number of KV heads per layer, $d_k$ the width of each stored key or value, and $b$ the bytes per numerical entry. The factor two counts both keys and values. A rough size is $B_{KV}=2Ln h_{KV}d_k b$. For $L=32$, $n=128{,}000$, $h_{KV}=8$, $d_k=128$, and $b=2$, this is $16{,}777{,}216{,}000$ bytes, or about $15.6$ **gibibytes (GiB)**, where one GiB is $2^{30}$ bytes, for one sequence before memory-allocation overhead. These parameter values are illustrative. Even when model weights fit in memory, KV states may limit the length or number of sequences a server can handle.
+
+The size calculation is one multiplication in [context.py](agent_lab/context.py). It describes storage, not inference speed or a provider's billed token count.
+
+```python
+def kv_cache_bytes(
+    layers, tokens, kv_heads, head_width, bytes_per_number
+):
+    values = (
+        layers, tokens, kv_heads, head_width, bytes_per_number
+    )
+    if any(value < 0 for value in values):
+        raise ValueError("dimensions must be nonnegative")
+    return 2 * layers * tokens * kv_heads * head_width * bytes_per_number
+
+
+assert kv_cache_bytes(32, 128_000, 8, 128, 2) == 16_777_216_000
+```
 
 ## 2. Architectural mechanisms for long context [17:00](https://www.youtube.com/watch?v=AiwCCvFW1uE&t=1020s)
 
@@ -127,11 +166,57 @@ Suppose the harness compacts after every 20 steps and replaces the accumulated s
 
 Under the stated convention, the summary replaces the preceding block's summary rather than accumulating with it. The first 20-call block submits $20(2{,}000)+300(0+\cdots+19)=97{,}000$ tokens. Each of the next four blocks submits $20(2{,}000+1{,}000)+300(0+\cdots+19)=117{,}000$ tokens. The total is $97{,}000+4(117{,}000)=565{,}000$ submitted input tokens, about $66.5\%$ below the uncompacted count. The last call contains $2{,}000+1{,}000+19(300)=8{,}700$ tokens. These counts exclude tokens and computation used to create summaries, any cached-token price reduction, and any accuracy loss. A comparison of billing or quality must include those terms separately.
 
+The two arithmetic functions in [context.py](agent_lab/context.py) implement the respective sums. `calls` is the number $T$ of model calls, `prefix` the fixed instruction and tool-schema length, `growth` the new history length after each call, `block` the calls between compactions, and `summary` the replacement summary length. This function requires $T$ to be a multiple of the block length, matching the worked example.
+
+```python
+def submitted_input_tokens(calls, prefix, growth):
+    if min(calls, prefix, growth) < 0:
+        raise ValueError("token counts must be nonnegative")
+    return prefix * calls + growth * calls * (calls - 1) // 2
+
+
+def compacted_input_tokens(
+    calls, prefix, growth, block, summary
+):
+    if block < 1 or calls < 0 or calls % block:
+        raise ValueError("calls must be a multiple of block")
+    if min(prefix, growth, summary) < 0:
+        raise ValueError("token counts must be nonnegative")
+    if calls == 0:
+        return 0
+    return (
+        prefix * calls
+        + growth * calls * (block - 1) // 2
+        + summary * (calls - block)
+    )
+
+
+assert submitted_input_tokens(100, 2000, 300) == 1_685_000
+assert compacted_input_tokens(100, 2000, 300, 20, 1000) == 565_000
+```
+
 In the release repair, the summary must preserve the exact “do not publish” constraint, the failing test identifier, changes already made, and the location of full logs. If it retains only “release issue resolved,” the next action may be wrong even though the history is shorter and the prose reads fluently. A continuation test should ask the agent to repair and report, then inspect whether it attempted publication.
 
 ### A concrete compaction schema
 
 Rather than ask for a generic narrative summary, define typed slots: `goal`, `hard_constraints`, `confirmed_facts`, `open_hypotheses`, `actions_completed`, `artifacts`, `pending_actions`, and `evidence_locations`. Mark each item with its source step and confidence. Keep exact identifiers and commands when subsequent steps depend on them. Store bulky logs outside the prompt with stable handles. On continuation, test that the compact state entails known invariants—for example, “do not publish” or “the target file is X”—before allowing further action. The summary is a form of state estimate: it must preserve information needed to choose future actions. A polished description of the past is insufficient when it omits an unresolved obligation.
+
+The implemented [compact state](agent_lab/context.py) is narrower than this proposed production schema. It preserves the goal and hard constraints exactly, retains the most recent observations, and stores identifiers for every observation in the complete in-process history. `keep_recent` is the number retained in the prompt. The full history remains in `RunState`; the current package does not persist that history across a process restart or expose a retrieval tool for old identifiers.
+
+```python
+def compact_state(state, keep_recent):
+    if keep_recent < 0:
+        raise ValueError("keep_recent must be nonnegative")
+    recent = tuple(state.observations[-keep_recent:]) if keep_recent else ()
+    return CompactState(
+        state.goal,
+        state.hard_constraints,
+        recent,
+        tuple(item.call_id for item in state.observations),
+    )
+```
+
+`ContextBuilder.build` assembles the goal, exact constraints, selected memories, and recent observations for the next model proposal. Its `estimated_tokens` counts whitespace-separated units as a teaching proxy. A deployed adapter must use the model provider's tokenizer and account for tool-schema serialization, role framing, and multimodal inputs before enforcing a real context limit.
 
 ### Exercises
 

@@ -104,6 +104,9 @@ def main():
 <p>These independent chapters develop agent architecture, tool use, long-context computation, and cross-task memory for advanced graduate readers who have used agents but have not built them. A common run-state model connects mathematical definitions to authorization, execution, context selection, persistent memory, and verification. Derivations, production-system examples, limitations, and exercises extend far beyond the recorded lectures.</p>
 <div class="hero"><b>Reading sequence</b><p>Begin with the agent interaction loop, then study its action interface, its growing context, and its ability to reuse experience. A timestamp beside a section title opens the corresponding source segment. Research findings and primary-source citations are integrated into the exposition.</p></div>
 <div class="cards">{cards}</div>
+<h2 id="lab">Cumulative Python harness</h2>
+<p>Each chapter now develops a part of one executable Python package. Chapter 1 defines run state, proposals, and verified stopping. Chapter 2 adds tool schemas, permission checks, an atomic conditional action, and reconciliation after an uncertain result. Chapter 3 adds context selection, compaction, and exact implementations of the worked cost equations. Chapter 4 adds scoped, time-bounded memory and budgeted retrieval. The package uses only the Python standard library and a deterministic model substitute, so readers can reproduce every behavior without credentials.</p>
+<p>Read the <a href="agent-lab.html">companion code guide</a> and run <code>python -m agent_lab.order_demo</code> from the repository root. The <a href="tests/test_agent_lab.py">behavioral checks</a> cover the permission gate, state race, uncertain commit, context arithmetic, and memory scope. The current four chapters form a working educational harness; later course topics can extend it. It is not a production runtime or a provider-specific integration.</p>
 <h2 id="sources">Role of CMU 11-768</h2>
 <p>The first four public lectures of <a href="https://www.cmu-agents.com/">CMU 11-768: AI Agents</a> supplied the topic sequence and the video segments linked from section headings. The <a href="https://www.youtube.com/playlist?list=PLSN0qpDfUvTM">course playlist</a> and official course site are the authoritative sources for what the instructors actually taught. These chapters are independently written research extensions. Their formal models, derivations, examples, engineering comparisons, and exercises may go beyond or differ from the lectures. They are not official course notes and are not endorsed by Carnegie Mellon University or the instructors.</p>
 <p>The <a href="sources/manifest.json">source manifest</a> records the four recordings used for this edition as of 12 September 2026. English captions were automatically generated, so technical terminology was checked against course slides and primary research sources. Captions and slide PDFs are not redistributed here. Later course topics are outside this set.</p>
@@ -113,8 +116,13 @@ def main():
 <p class="tiny">Editable text versions: <a href="lecture-01-agents.md">Chapter 1</a> · <a href="lecture-02-tool-use.md">Chapter 2</a> · <a href="lecture-03-long-context.md">Chapter 3</a> · <a href="lecture-04-memory-and-skills.md">Chapter 4</a>.</p>"""
     (ROOT / "index.html").write_text(
         page("Reading guide", index_body,
-             '<ul><li><a href="#sources">Course attribution and scope</a></li><li><a href="#project">Development and style</a></li></ul>'),
+             '<ul><li><a href="#lab">Python harness</a></li><li><a href="#sources">Course attribution and scope</a></li><li><a href="#project">Development and style</a></li></ul>'),
         encoding="utf-8"
+    )
+    lab_file = ROOT / "agent_lab" / "README.md"
+    lab_body = render_body(lab_file.read_text(encoding="utf-8"))
+    (ROOT / "agent-lab.html").write_text(
+        page("Companion Python harness", lab_body), encoding="utf-8"
     )
     journey_file = ROOT / "DEVELOPMENT-JOURNEY.md"
     if journey_file.exists():

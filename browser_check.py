@@ -12,7 +12,12 @@ def main():
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page(viewport={"width": 1280, "height": 900})
-        for file in [ROOT / "index.html", ROOT / "development-journey.html", *sorted(ROOT.glob("lecture-*.html"))]:
+        for file in [
+            ROOT / "index.html",
+            ROOT / "agent-lab.html",
+            ROOT / "development-journey.html",
+            *sorted(ROOT.glob("lecture-*.html")),
+        ]:
             page.goto(file.as_uri(), wait_until="domcontentloaded", timeout=30000)
             if file.name.startswith("lecture-"):
                 page.wait_for_function(
@@ -24,6 +29,8 @@ def main():
                 assert page.locator("mjx-container").count() >= 4
             assert page.locator("h1").count() == 1
             assert page.locator("a[href='index.html']").count() >= 1
+            if file.name == "agent-lab.html":
+                assert page.get_by_text("python -m agent_lab.order_demo").count()
             print(file.name, "rendered", "math", page.locator("mjx-container").count())
         browser.close()
 

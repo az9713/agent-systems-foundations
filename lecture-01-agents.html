@@ -51,22 +51,55 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <h2 id="2-the-interaction-loop-2435">2. The interaction loop <a href="https://www.youtube.com/watch?v=UwfjzyLnvMg&amp;t=1475s">24:35</a></h2>
 <p>A compact coding agent, such as <a href="https://github.com/swe-agent/mini-swe-agent">mini-swe-agent</a>, constructs messages, requests a model response, executes a validated tool call, appends the resulting observation, and repeats. Its sequence of actions and observations becomes part of the next prompt. Each boundary in this loop has a different meaning. Model output is a proposal. A tool result is evidence about what happened. Neither, by itself, establishes that the task succeeded.</p>
 <p>For a request to repair a failing software test, a sound trace has a clear sequence. First inspect the <strong>repository</strong>, the collection of project files and version history, and identify the test command. Run the failing test and read the relevant code. Form a hypothesis, make a focused edit, and rerun the test. Finally, inspect the <strong>diff</strong>, the recorded before/after file changes, and report which checks passed. Each tool output is an <em>observation</em>, not an instruction. This distinction becomes crucial when the output is an untrusted webpage or malicious file.</p>
-<pre><code class="language-python">def run_agent(model, tools, verifier, goal, step_budget=30):
-    history = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: goal}]
-    for _ in range(step_budget):
-        proposal = model(history, tools.schemas())
-        if proposal.kind == &quot;finish&quot;:
-            if verifier(goal, history, proposal.text):
-                return proposal.text, history
-            history.append({&quot;role&quot;: &quot;tool&quot;, &quot;content&quot;: &quot;Goal not verified&quot;})
-            continue
-        call = tools.validate(proposal.call)
-        tools.authorize(call)
-        result = tools.execute(call)
-        history += [proposal.as_message(), result.as_message()]
-    raise RuntimeError(&quot;Step budget exhausted&quot;)
+<p>The <a href="agent-lab.html">companion Python package</a> makes the mathematical separation between proposal and execution explicit. <code>ToolCall</code> is a proposed action with a name, arguments, and a call identifier. <code>FinalAnswer</code> is a proposed termination. <code>Authority</code> is the set of effects granted for one run; it is supplied by the caller and cannot be enlarged by a tool result. These are data types, not commands to the external service.</p>
+<pre><code class="language-python">from dataclasses import dataclass
+from typing import Any, Mapping
+
+
+@dataclass(frozen=True)
+class Authority:
+    effects: frozenset[str]
+    memory_scopes: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: Mapping[str, Any]
+    call_id: str
+    idempotency_key: str | None = None
+
+
+@dataclass(frozen=True)
+class FinalAnswer:
+    text: str
 </code></pre>
-<p>The code is a conceptual skeleton. A production loop also needs time and money budgets. It needs <strong>retries</strong>, which repeat an operation after failure, and <strong>cancellation</strong>, which stops in-flight work. Unique <strong>call IDs</strong> pair requests with results. <strong>Concurrency controls</strong> govern overlapping actions. <strong>Checkpoints</strong> save state for resumption, while <strong>trace capture</strong> records the action sequence. Sandboxing limits the effects of executed code. A tool error must become an observation the agent can handle. An exception must not silently make the harness believe the action succeeded.</p>
+<p>The complete definitions live in <a href="agent_lab/types.py">types.py</a>. A <code>Model</code> adapter returns either <code>ToolCall</code> or <code>FinalAnswer</code>. The harness records the proposal before it evaluates the execution gate. In <a href="agent_lab/harness.py">harness.py</a>, the decisive transition is:</p>
+<pre><code class="language-python">proposal = model.propose(prompt)
+label = (
+    f&quot;{proposal.name}:{proposal.call_id}&quot;
+    if isinstance(proposal, ToolCall)
+    else &quot;final answer&quot;
+)
+state.events.append(Event(step, &quot;proposed&quot;, label))
+if isinstance(proposal, FinalAnswer):
+    if self.verifier(state, proposal):
+        state.events.append(Event(step, &quot;finish&quot;, &quot;verified&quot;))
+        return RunResult(
+            proposal.text,
+            tuple(state.events),
+            tuple(state.observations),
+            step,
+            state.submitted_input_tokens,
+        )
+    state.events.append(
+        Event(step, &quot;rejected&quot;, &quot;unverified answer&quot;)
+    )
+    continue
+</code></pre>
+<p>This implements a stopping rule: a final answer terminates the run only after the verifier accepts it. The next branch in the same loop calls <code>tools.admit(proposal, authority, state.observations)</code> before <code>tools.invoke</code>. Admission implements the predicate $\operatorname{allow}(a,e,U)$ from Section 0. The model never calls the external service directly. On each completed invocation, the harness appends an <code>Observation</code> and an event, making the next proposal conditional on the returned evidence. A step limit bounds the run; an unverified answer consumes a step rather than becoming a false success.</p>
+<p>The package is executable with <code>python -m agent_lab.order_demo</code>. Its deterministic proposal source stands in for a language-model API so the example needs no credentials. The first case produces <code>get_order_status:ok</code>, <code>cancel_order:unknown</code>, and <code>get_order_status:ok</code>: the cancellation committed, its response was lost, and the agent reconciled by reading the authoritative state. The second case reads a shipped status and selects the return-policy branch. <a href="tests/test_agent_lab.py">The executable checks</a> exercise permission rejection, verification failure, and both outcomes.</p>
+<p>A deployed loop also needs time and money budgets. It needs <strong>retries</strong>, which repeat an operation after failure, and <strong>cancellation</strong>, which stops in-flight work. Unique <strong>call IDs</strong> pair requests with results. <strong>Concurrency controls</strong> govern overlapping actions. <strong>Checkpoints</strong> save state for resumption, while <strong>trace capture</strong> records the action sequence. Sandboxing limits the effects of executed code. These requirements cannot be inferred from the short loop alone. This package implements a step budget and an in-process event record; it does not claim durable recovery after process failure or provide a production sandbox.</p>
 <p>A robust implementation represents each invocation as a state transition <code>proposed → admitted → running → succeeded | failed | uncertain</code>. The <code>uncertain</code> state matters when a <strong>timeout</strong>, an enforced waiting limit, occurs after a remote service might have committed a <strong>side effect</strong>, a change outside the model's text. Repeating the call is safe only with an <strong>idempotency key</strong>, a transaction identifier that makes repeated requests count as one operation, or a <strong>reconciliation query</strong> that checks the authoritative state before retrying. The run itself needs the states <code>active → waiting_for_user | completed | failed | cancelled</code>. <strong>Streaming</strong> sends partial output before the turn ends. A streamed sentence does not establish that a tool action or the run has completed. <a href="https://docs.openclaw.ai/concepts/agent-loop">OpenClaw's agent-loop documentation</a> makes this distinction operational: it describes a serialized per-session loop, lifecycle events, session persistence, streaming, timeout handling, and a separate completed-turn signal for Codex-backed runs.</p>
 <p>Let $n$ be the number of indispensable steps and $p$ their common success probability. If their successes are independent, meaning one step's result does not alter the probability of another's, then $P(\text{whole task succeeds})=p^n$. At $p=0.97$ and $n=30$, this is about $0.40$. Independence is an oversimplification: errors can be correlated, and recovery can repair a mistake. Nevertheless, local accuracy alone cannot establish whole-task reliability. Verification, reversible actions, retries informed by new evidence, and checkpoints change the effective error process.</p>
 <h2 id="3-six-dimensions-of-agent-capability-3045">3. Six dimensions of agent capability <a href="https://www.youtube.com/watch?v=UwfjzyLnvMg&amp;t=1845s">30:45</a></h2>

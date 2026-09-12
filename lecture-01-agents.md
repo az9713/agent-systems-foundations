@@ -71,24 +71,63 @@ A compact coding agent, such as [mini-swe-agent](https://github.com/swe-agent/mi
 
 For a request to repair a failing software test, a sound trace has a clear sequence. First inspect the **repository**, the collection of project files and version history, and identify the test command. Run the failing test and read the relevant code. Form a hypothesis, make a focused edit, and rerun the test. Finally, inspect the **diff**, the recorded before/after file changes, and report which checks passed. Each tool output is an *observation*, not an instruction. This distinction becomes crucial when the output is an untrusted webpage or malicious file.
 
+The [companion Python package](agent-lab.html) makes the mathematical separation between proposal and execution explicit. `ToolCall` is a proposed action with a name, arguments, and a call identifier. `FinalAnswer` is a proposed termination. `Authority` is the set of effects granted for one run; it is supplied by the caller and cannot be enlarged by a tool result. These are data types, not commands to the external service.
+
 ```python
-def run_agent(model, tools, verifier, goal, step_budget=30):
-    history = [{"role": "user", "content": goal}]
-    for _ in range(step_budget):
-        proposal = model(history, tools.schemas())
-        if proposal.kind == "finish":
-            if verifier(goal, history, proposal.text):
-                return proposal.text, history
-            history.append({"role": "tool", "content": "Goal not verified"})
-            continue
-        call = tools.validate(proposal.call)
-        tools.authorize(call)
-        result = tools.execute(call)
-        history += [proposal.as_message(), result.as_message()]
-    raise RuntimeError("Step budget exhausted")
+from dataclasses import dataclass
+from typing import Any, Mapping
+
+
+@dataclass(frozen=True)
+class Authority:
+    effects: frozenset[str]
+    memory_scopes: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: Mapping[str, Any]
+    call_id: str
+    idempotency_key: str | None = None
+
+
+@dataclass(frozen=True)
+class FinalAnswer:
+    text: str
 ```
 
-The code is a conceptual skeleton. A production loop also needs time and money budgets. It needs **retries**, which repeat an operation after failure, and **cancellation**, which stops in-flight work. Unique **call IDs** pair requests with results. **Concurrency controls** govern overlapping actions. **Checkpoints** save state for resumption, while **trace capture** records the action sequence. Sandboxing limits the effects of executed code. A tool error must become an observation the agent can handle. An exception must not silently make the harness believe the action succeeded.
+The complete definitions live in [types.py](agent_lab/types.py). A `Model` adapter returns either `ToolCall` or `FinalAnswer`. The harness records the proposal before it evaluates the execution gate. In [harness.py](agent_lab/harness.py), the decisive transition is:
+
+```python
+proposal = model.propose(prompt)
+label = (
+    f"{proposal.name}:{proposal.call_id}"
+    if isinstance(proposal, ToolCall)
+    else "final answer"
+)
+state.events.append(Event(step, "proposed", label))
+if isinstance(proposal, FinalAnswer):
+    if self.verifier(state, proposal):
+        state.events.append(Event(step, "finish", "verified"))
+        return RunResult(
+            proposal.text,
+            tuple(state.events),
+            tuple(state.observations),
+            step,
+            state.submitted_input_tokens,
+        )
+    state.events.append(
+        Event(step, "rejected", "unverified answer")
+    )
+    continue
+```
+
+This implements a stopping rule: a final answer terminates the run only after the verifier accepts it. The next branch in the same loop calls `tools.admit(proposal, authority, state.observations)` before `tools.invoke`. Admission implements the predicate $\operatorname{allow}(a,e,U)$ from Section 0. The model never calls the external service directly. On each completed invocation, the harness appends an `Observation` and an event, making the next proposal conditional on the returned evidence. A step limit bounds the run; an unverified answer consumes a step rather than becoming a false success.
+
+The package is executable with `python -m agent_lab.order_demo`. Its deterministic proposal source stands in for a language-model API so the example needs no credentials. The first case produces `get_order_status:ok`, `cancel_order:unknown`, and `get_order_status:ok`: the cancellation committed, its response was lost, and the agent reconciled by reading the authoritative state. The second case reads a shipped status and selects the return-policy branch. [The executable checks](tests/test_agent_lab.py) exercise permission rejection, verification failure, and both outcomes.
+
+A deployed loop also needs time and money budgets. It needs **retries**, which repeat an operation after failure, and **cancellation**, which stops in-flight work. Unique **call IDs** pair requests with results. **Concurrency controls** govern overlapping actions. **Checkpoints** save state for resumption, while **trace capture** records the action sequence. Sandboxing limits the effects of executed code. These requirements cannot be inferred from the short loop alone. This package implements a step budget and an in-process event record; it does not claim durable recovery after process failure or provide a production sandbox.
 
 A robust implementation represents each invocation as a state transition `proposed → admitted → running → succeeded | failed | uncertain`. The `uncertain` state matters when a **timeout**, an enforced waiting limit, occurs after a remote service might have committed a **side effect**, a change outside the model's text. Repeating the call is safe only with an **idempotency key**, a transaction identifier that makes repeated requests count as one operation, or a **reconciliation query** that checks the authoritative state before retrying. The run itself needs the states `active → waiting_for_user | completed | failed | cancelled`. **Streaming** sends partial output before the turn ends. A streamed sentence does not establish that a tool action or the run has completed. [OpenClaw's agent-loop documentation](https://docs.openclaw.ai/concepts/agent-loop) makes this distinction operational: it describes a serialized per-session loop, lifecycle events, session persistence, streaming, timeout handling, and a separate completed-turn signal for Codex-backed runs.
 

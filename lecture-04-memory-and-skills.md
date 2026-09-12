@@ -40,6 +40,31 @@ Store each item with **metadata**, structured fields that describe its content a
 
 An instruction-like memory is particularly sensitive to provenance. A webpage's claim that the agent should reveal **credentials**, secrets used to authenticate access, must remain source content, even if stored and retrieved later. Promoting it to a system instruction is **memory poisoning**, the persistent analogue of **prompt injection**, an attempt to make lower-trust content act as a higher-authority instruction. A **write gate**, a check before durable storage, should require trusted origin for policy-like content and store ordinary retrieved material as quoted evidence with its source. Deletion and correction are security controls as well as quality controls.
 
+The [companion memory type](agent_lab/memory.py) records provenance and scope as fields rather than burying them in the text. `kind` distinguishes a fact from a procedure. `source` states its origin. `valid_from` and `valid_until` are Unix timestamps, measured in seconds from 1 January 1970 UTC; the latter may be `None` for no preset expiry. `trigger_terms` are simple case-insensitive substrings in the task goal. `required_effects` describes the capabilities needed to follow a skill. This trigger is intentionally elementary; it can miss paraphrases and match irrelevant uses of a word.
+
+```python
+from dataclasses import dataclass
+from typing import Literal
+
+
+@dataclass(frozen=True)
+class MemoryItem:
+    item_id: str
+    kind: Literal["fact", "skill"]
+    content: str
+    source: str
+    scope: str
+    valid_from: float
+    valid_until: float | None
+    token_cost: int
+    estimated_gain: float
+    estimated_risk: float
+    trigger_terms: tuple[str, ...] = ()
+    required_effects: frozenset[str] = frozenset()
+```
+
+The [file-backed store](agent_lab/memory.py) writes its list of records as JSON, a structured text format, through a temporary file followed by `os.replace`. This prevents a reader from seeing a partially written file during an ordinary single-process replacement. It does not implement a trusted-origin write gate, version history, deletion workflow, or cross-process coordination. In this example, the application developer writes memory; the model cannot write to the store through a registered tool. A later extension that grants model-initiated writes must add those controls before exposing that operation.
+
 ## 2. Authored skills and progressive disclosure [15:00](https://www.youtube.com/watch?v=6zigF2a-2Pw&t=900s)
 
 An authored skill can be stored as a package whose `SKILL.md` contains instructions and pointers to supplementary material. A compact **index** contains skill names and short descriptions. The agent sees this index first and loads full instructions only for skills that appear relevant. This **progressive disclosure** controls context cost while retaining access to detailed procedures.
@@ -72,6 +97,24 @@ For a candidate fact $f$ and existing memory $m$, distinguish four cases. If the
 For return policies, a later dated merchant page can supersede an earlier one for future purchases. It does not erase which policy applied to an earlier order. The memory store should preserve the dates and source addresses of both claims. If two pages conflict without a clear effective-date rule, mark the current policy unresolved and retrieve the authoritative source again. A semantic search score cannot adjudicate the conflict.
 
 A retrieval system should answer “Is this item needed for this task?” before “Is it semantically similar?” Personal data requires retention limits and access scope. Even a correct memory can be inappropriate to surface in a new context. Benchmark accuracy does not compensate for leaking private context.
+
+The `applicable` predicate in [memory.py](agent_lab/memory.py) implements a necessary, mechanically checked subset of $\operatorname{access}(m,\tau,u)$. It tests scope membership, required effects, the validity interval, and the trigger. `authority.memory_scopes` is the set of memory scopes permitted for this run; it is separate from `authority.effects`, the executable tool rights. Passing this filter does not establish that the content is true or useful.
+
+```python
+def applicable(self, goal, authority, now):
+    if self.scope not in authority.memory_scopes:
+        return False
+    if not self.required_effects <= authority.effects:
+        return False
+    if now < self.valid_from:
+        return False
+    if self.valid_until is not None and now >= self.valid_until:
+        return False
+    lowered = goal.casefold()
+    return not self.trigger_terms or any(
+        term.casefold() in lowered for term in self.trigger_terms
+    )
+```
 
 For memory $m$, task $\tau$, and authority state $u$, let $\operatorname{access}(m,\tau,u)$ be one when this task may use the item and zero otherwise. The notation $m\in M$ means item $m$ belongs to store $M$, and $A\subseteq B$ means every member of set $A$ also belongs to $B$. The retrieval policy $R(\tau,M,u)$ should return only accessible items: $R(\tau,M,u)\subseteq\{m\in M:\operatorname{access}(m,\tau,u)=1\}$. Among accessible items it should prefer those with positive expected benefit. This allows a private preference to be available in a personal assistant yet excluded from a shared work session. A retrieval model must not turn semantic similarity into permission.
 
@@ -106,6 +149,29 @@ For retrieved item $m$ and task $\tau$, define its **marginal value** $\Delta(m,
 ### Retrieval is a policy, not a search score
 
 For $n$ candidate memories $m_1,\ldots,m_n$, let $z_i\in\{0,1\}$ indicate whether item $i$ is retrieved, $z=(z_1,\ldots,z_n)$ the complete selection, $c_i$ its prompt-token cost, and $\lambda_{\rm token}\ge0$ a token-cost weight. Let $U_{\rm sel}(\tau,z)$ be the task utility when selection $z$ is supplied, and let $\mathbb E$ average over future tasks and stochastic outcomes. The selector should maximize expected downstream utility $\mathbb E[U_{\rm sel}(\tau,z)]-\lambda_{\rm token}\sum_i c_i z_i$ subject to access rules and a stated context-token budget. A **similarity ranker** orders items by topical closeness. An **embedding** is a numerical vector representing content. A “top $k$ by embedding similarity” rule selects the $k$ nearest vectors. This similarity rule is a baseline for retrieval. It does not account for interactions between items: two individually useful memories may conflict. A skill may also help only when the current **tool schema**, the machine-readable specification of tool arguments, matches its assumptions.
+
+The store applies the eligibility filter first. It then calls Chapter 3's `select_items` with each eligible item's estimated net value $\widehat{\Delta}_i-\widehat{r}_i-\lambda_{\rm token}c_i$, where $\widehat{\Delta}_i$ is `estimated_gain` and $\widehat{r}_i$ is `estimated_risk`. These quantities are user-supplied estimates in the example, not calibrated probabilities. The returned names select records for the next prompt. A negative-value item is omitted because the empty selection has value zero.
+
+```python
+eligible = [
+    item for item in self._items.values()
+    if item.applicable(goal, authority, current)
+]
+candidates = [
+    Candidate(
+        item.item_id,
+        item.token_cost,
+        item.estimated_gain
+        - item.estimated_risk
+        - token_price * item.token_cost,
+    )
+    for item in eligible
+]
+selected = set(select_items(candidates, budget))
+return tuple(item for item in eligible if item.item_id in selected)
+```
+
+In [harness.py](agent_lab/harness.py), `self.memory.retrieve(goal, authority)` supplies selected text to `ContextBuilder.build` before each model proposal. The model sees that text in `Prompt.memories`; the `Authority` object remains unchanged. The [behavioral check](tests/test_agent_lab.py) confirms both properties. Thus a stored procedure can influence a proposal, while the Chapter 2 tool gate still decides whether any proposed action can execute. Because the deterministic demonstration model does not interpret prose instructions, the test checks prompt inclusion rather than claiming an improvement in task success. A real model adapter would require paired evaluation of runs with and without the memory.
 
 The effect of a memory item is causal only under a defined intervention. Holding the same task and model fixed, compare outcomes when the item is supplied versus withheld while keeping all other context and budgets comparable. Adding an item changes prompt length and may displace other information. A measured treatment effect should include this displacement because it is part of what happens in deployment. For retrieval-policy comparison, evaluate the entire selector on held-out tasks rather than giving the experimental condition an oracle that already knows which skill applies. Report false retrieval as well as missed retrieval. A useful confusion matrix places true applicability on one axis and the retrieval decision on the other. Downstream task success then distinguishes harmless false retrievals from ones that caused failure.
 

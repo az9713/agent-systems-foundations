@@ -23,6 +23,24 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p>Let $h_t$ be the complete event history at step $t$, $g$ the user's goal, $m_t$ stored memory, $\mathcal T_t$ the available-tool set, and $b_t$ the remaining resource budget. A <strong>harness</strong> is the software controlling the agent's model/tool loop. A <strong>context builder</strong> $C_\phi$, configured by harness parameters $\phi$, selects the model-visible subset $c_t=C_\phi(g,h_t,m_t,\mathcal T_t,b_t)$. For $n$ candidate context items $e_1,\ldots,e_n$, let $\ell_i$ be item $i$'s token length, $v_i$ its estimated value for the current goal and history, and $z_i\in\{0,1\}$ its inclusion decision, with one meaning include and zero meaning omit. Let $B_t$ be the usable prompt-token budget after fixed instructions and tool definitions. The operator $\max_{z_1,\ldots,z_n}$ chooses inclusion decisions with the largest total estimated value. The symbol $\sum_i$ adds over the candidate items. A simple approximation chooses items by</p>
 <p>$$\max_{z_1,\ldots,z_n}\sum_i v_i z_i\quad\text{subject to}\quad\sum_i\ell_i z_i\le B_t,$$</p>
 <p>This is a <strong>knapsack model</strong>: select valuable items under a size limit. It is incomplete because information can be complementary or contradictory. A test failure may be useful only when the relevant code is also available. An outdated instruction can even have negative value if the agent follows it. For a candidate context $c$, let $|c|$ be its token length, $P(\text{success}\mid c)$ the task-success probability when it is supplied, $\operatorname{cost}(c)$ its resource cost, and $\lambda\ge0$ the cost weight. Define $U(c)=P(\text{success}\mid c)-\lambda\operatorname{cost}(c)$ and $c^*=\arg\max_{|c|\le B_t}U(c)$, where $\arg\max$ selects a maximizing context. The true utility $U$ is unknown to the context builder. It must use approximate retrieval and then measure how well the agent continues with the selected context. Token count alone does not establish that the selection was good.</p>
+<p>The <a href="agent_lab/context.py">companion selector</a> solves the additive, integer-cost form exactly for a small budget. <code>Candidate.tokens</code> represents $\ell_i$, <code>Candidate.value</code> represents $v_i$, and <code>budget</code> represents $B_t$. <code>best[c]</code> stores the best value and selected names with capacity $c$. Descending capacity prevents one item from being used twice. For three items with sizes $(6,3,3)$ and values $(8,5,5)$, the code selects the two smaller items under a six-unit budget; a greedy choice of the largest individual value would be worse.</p>
+<pre><code class="language-python">def select_items(candidates, budget):
+    if budget &lt; 0:
+        raise ValueError(&quot;budget must be nonnegative&quot;)
+    best = [(0.0, ()) for _ in range(budget + 1)]
+    for item in candidates:
+        if item.tokens &lt; 1:
+            raise ValueError(&quot;each candidate must cost at least one token&quot;)
+        for capacity in range(budget, item.tokens - 1, -1):
+            old_value, old_names = best[capacity - item.tokens]
+            new_value = old_value + item.value
+            if new_value &gt; best[capacity][0]:
+                best[capacity] = (
+                    new_value, old_names + (item.name,)
+                )
+    return best[budget][1]
+</code></pre>
+<p>The additive value assumption and integer budget are deliberate simplifications. This selector is used for eligible memory items in Chapter 4. The current harness does not apply the knapsack rule to every tool schema or history event. Those inputs have separate inclusion policies, and hard constraints are retained without a value score.</p>
 <p>For the release repair, the publication prohibition should be a non-optional constraint on permitted actions, not merely one candidate item assigned an uncertain relevance score $v_i$. The recent failure log may have high diagnostic value but can be retained outside the prompt and retrieved by file location. The exact failing test and the changed files deserve a compact, current representation. This division separates an <strong>invariant</strong>, a condition required to hold throughout the run, from evidence that can be selected according to the immediate subtask.</p>
 <p>Context items also differ in authority. Trusted user and developer instructions, project rules, <strong>tool schemas</strong> (machine-readable input forms), retrieved documents, and raw tool outputs should carry <strong>provenance</strong>, a record of their source, and be separated in the assembled message. A retrieved webpage can inform an answer but cannot silently alter the <strong>permission gate</strong>, the component deciding which proposed actions may execute. If the same item is included in $c_t$ at every step, its token cost recurs on subsequent model calls. <a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents">Anthropic's context-engineering guidance</a> recommends concise persistent instructions and <strong>just-in-time retrieval</strong>, which loads details only when a task needs them. This policy can increase estimated value per token $v_i/\ell_i$. The full source remains available for later retrieval.</p>
 <h2 id="1-prefill-decoding-and-attention-cost-0635">1. Prefill, decoding, and attention cost <a href="https://www.youtube.com/watch?v=AiwCCvFW1uE&amp;t=395s">06:35</a></h2>
@@ -31,6 +49,20 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p>$$\operatorname{Attn}(Q,K,V)=\operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}+M\right)V,$$</p>
 <p>The notation $O(f(n))$ means growth bounded above by a constant multiple of $f(n)$ for sufficiently large $n$. The $n\times n$ score matrix costs $O(n^2d_k)$ arithmetic in a straightforward prefill implementation. With a KV cache, one new token compares its query with roughly $n$ cached keys, costing $O(nd_k)$ attention arithmetic for that token. This does not make a full long generation linear in total length. Actual wall time also depends on optimized computation <strong>kernels</strong>, memory transfer speed, <strong>batching</strong> (processing several requests together), parallelism, and the model's non-attention layers.</p>
 <p>Let $B_{KV}$ be the KV-cache size in bytes, $L$ the number of model layers, and $n$ the number of stored tokens. Let $h_{KV}$ be the number of KV heads per layer, $d_k$ the width of each stored key or value, and $b$ the bytes per numerical entry. The factor two counts both keys and values. A rough size is $B_{KV}=2Ln h_{KV}d_k b$. For $L=32$, $n=128{,}000$, $h_{KV}=8$, $d_k=128$, and $b=2$, this is $16{,}777{,}216{,}000$ bytes, or about $15.6$ <strong>gibibytes (GiB)</strong>, where one GiB is $2^{30}$ bytes, for one sequence before memory-allocation overhead. These parameter values are illustrative. Even when model weights fit in memory, KV states may limit the length or number of sequences a server can handle.</p>
+<p>The size calculation is one multiplication in <a href="agent_lab/context.py">context.py</a>. It describes storage, not inference speed or a provider's billed token count.</p>
+<pre><code class="language-python">def kv_cache_bytes(
+    layers, tokens, kv_heads, head_width, bytes_per_number
+):
+    values = (
+        layers, tokens, kv_heads, head_width, bytes_per_number
+    )
+    if any(value &lt; 0 for value in values):
+        raise ValueError(&quot;dimensions must be nonnegative&quot;)
+    return 2 * layers * tokens * kv_heads * head_width * bytes_per_number
+
+
+assert kv_cache_bytes(32, 128_000, 8, 128, 2) == 16_777_216_000
+</code></pre>
 <h2 id="2-architectural-mechanisms-for-long-context-1700">2. Architectural mechanisms for long context <a href="https://www.youtube.com/watch?v=AiwCCvFW1uE&amp;t=1020s">17:00</a></h2>
 <p><strong>Sliding-window attention</strong> limits each token to nearby predecessors. <strong>Recurrent attention</strong> carries a fixed-size state forward. <strong>Linear attention</strong> factorizes a similarity calculation so it can use such a state. <strong>Sparse attention</strong> computes only selected token pairs. <strong>KV compression</strong> stores reduced key/value representations. <strong>Hybrid architectures</strong> combine local computation with occasional long-range access. Their tradeoffs differ: reducing comparisons, compressing past information, and reducing cache memory solve different problems. In the table, $w$ denotes the number of earlier tokens visible through a sliding window.</p>
 <table>
@@ -102,9 +134,48 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p>Consider a 100-step agent run with a fixed 2,000-token instruction/tool prefix and 300 new history tokens per step. Without compaction, the agent submits $2{,}000(100)+300(100)(99)/2=1{,}685{,}000$ input tokens. The final prompt is $2{,}000+99(300)=31{,}700$ tokens. A perfectly stable prefix may make repeated tokens cheaper to process or bill. The final model call still contains 31,700 tokens of potentially relevant and irrelevant history.</p>
 <p>Suppose the harness compacts after every 20 steps and replaces the accumulated segment with a 1,000-token state summary. Each subsequent block begins with the fixed 2,000-token prefix and the saved state. It then grows by 300 history tokens per step. Cumulative input falls. At each boundary, however, the agent must rely on a summary that may have lost information. The engineering objective is two-dimensional: reduce computation and billing while controlling continuation error. Cache reuse cannot recover stale evidence or a hard constraint lost during compaction. A compact state can therefore lower cost while degrading correctness.</p>
 <p>Under the stated convention, the summary replaces the preceding block's summary rather than accumulating with it. The first 20-call block submits $20(2{,}000)+300(0+\cdots+19)=97{,}000$ tokens. Each of the next four blocks submits $20(2{,}000+1{,}000)+300(0+\cdots+19)=117{,}000$ tokens. The total is $97{,}000+4(117{,}000)=565{,}000$ submitted input tokens, about $66.5\%$ below the uncompacted count. The last call contains $2{,}000+1{,}000+19(300)=8{,}700$ tokens. These counts exclude tokens and computation used to create summaries, any cached-token price reduction, and any accuracy loss. A comparison of billing or quality must include those terms separately.</p>
+<p>The two arithmetic functions in <a href="agent_lab/context.py">context.py</a> implement the respective sums. <code>calls</code> is the number $T$ of model calls, <code>prefix</code> the fixed instruction and tool-schema length, <code>growth</code> the new history length after each call, <code>block</code> the calls between compactions, and <code>summary</code> the replacement summary length. This function requires $T$ to be a multiple of the block length, matching the worked example.</p>
+<pre><code class="language-python">def submitted_input_tokens(calls, prefix, growth):
+    if min(calls, prefix, growth) &lt; 0:
+        raise ValueError(&quot;token counts must be nonnegative&quot;)
+    return prefix * calls + growth * calls * (calls - 1) // 2
+
+
+def compacted_input_tokens(
+    calls, prefix, growth, block, summary
+):
+    if block &lt; 1 or calls &lt; 0 or calls % block:
+        raise ValueError(&quot;calls must be a multiple of block&quot;)
+    if min(prefix, growth, summary) &lt; 0:
+        raise ValueError(&quot;token counts must be nonnegative&quot;)
+    if calls == 0:
+        return 0
+    return (
+        prefix * calls
+        + growth * calls * (block - 1) // 2
+        + summary * (calls - block)
+    )
+
+
+assert submitted_input_tokens(100, 2000, 300) == 1_685_000
+assert compacted_input_tokens(100, 2000, 300, 20, 1000) == 565_000
+</code></pre>
 <p>In the release repair, the summary must preserve the exact “do not publish” constraint, the failing test identifier, changes already made, and the location of full logs. If it retains only “release issue resolved,” the next action may be wrong even though the history is shorter and the prose reads fluently. A continuation test should ask the agent to repair and report, then inspect whether it attempted publication.</p>
 <h3 id="a-concrete-compaction-schema">A concrete compaction schema</h3>
 <p>Rather than ask for a generic narrative summary, define typed slots: <code>goal</code>, <code>hard_constraints</code>, <code>confirmed_facts</code>, <code>open_hypotheses</code>, <code>actions_completed</code>, <code>artifacts</code>, <code>pending_actions</code>, and <code>evidence_locations</code>. Mark each item with its source step and confidence. Keep exact identifiers and commands when subsequent steps depend on them. Store bulky logs outside the prompt with stable handles. On continuation, test that the compact state entails known invariants—for example, “do not publish” or “the target file is X”—before allowing further action. The summary is a form of state estimate: it must preserve information needed to choose future actions. A polished description of the past is insufficient when it omits an unresolved obligation.</p>
+<p>The implemented <a href="agent_lab/context.py">compact state</a> is narrower than this proposed production schema. It preserves the goal and hard constraints exactly, retains the most recent observations, and stores identifiers for every observation in the complete in-process history. <code>keep_recent</code> is the number retained in the prompt. The full history remains in <code>RunState</code>; the current package does not persist that history across a process restart or expose a retrieval tool for old identifiers.</p>
+<pre><code class="language-python">def compact_state(state, keep_recent):
+    if keep_recent &lt; 0:
+        raise ValueError(&quot;keep_recent must be nonnegative&quot;)
+    recent = tuple(state.observations[-keep_recent:]) if keep_recent else ()
+    return CompactState(
+        state.goal,
+        state.hard_constraints,
+        recent,
+        tuple(item.call_id for item in state.observations),
+    )
+</code></pre>
+<p><code>ContextBuilder.build</code> assembles the goal, exact constraints, selected memories, and recent observations for the next model proposal. Its <code>estimated_tokens</code> counts whitespace-separated units as a teaching proxy. A deployed adapter must use the model provider's tokenizer and account for tool-schema serialization, role framing, and multimodal inputs before enforcing a real context limit.</p>
 <h3 id="exercises">Exercises</h3>
 <ol>
 <li>Derive the $\Theta(T^2)$ cumulative input-token result for a growing history. Recalculate when compaction resets the history to $c$ tokens every $K$ steps.</li>

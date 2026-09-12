@@ -62,6 +62,49 @@ An endpoint described by **OpenAPI**, a format for documenting Hypertext Transfe
 
 Let $id$ be a unique call ID, $\tau$ the selected tool, $x$ its argument, and $\kappa$ an optional **idempotency key**: a server-recognized identifier that makes repeated submissions of one logical operation count as one transaction. Represent a call by $(id,\tau,x,\kappa)$. If a network timeout occurs after execution, a blind retry can duplicate a purchase or email. For a side-effecting operation, either the downstream service must honor $\kappa$, or the harness must **reconcile** the state by querying an authoritative record before retrying. Record tool version, time, arguments (with secret fields removed), outcome, and verification evidence. A completed network exchange does not, by itself, confirm the postcondition. The harness needs evidence about the state the downstream service actually reached.
 
+The admission rule is implemented in [tools.py](agent_lab/tools.py). `spec.fields` maps argument names to required Python types. `spec.effects` is the set $\operatorname{req}(\tau,x)$ for this simplified tool specification; `authority.effects` is $\operatorname{cap}(u)$. `spec.precondition` is a function of the proposed call and previously recorded observations. The code rejects an unknown tool, an altered argument shape, an ungranted effect, or missing evidence *before* calling the handler.
+
+```python
+def admit(self, call, authority, evidence):
+    spec = self._tools.get(call.name)
+    if spec is None:
+        raise CallRejected("unknown tool")
+    if set(call.arguments) != set(spec.fields):
+        raise CallRejected("argument fields do not match schema")
+    for field, expected_type in spec.fields.items():
+        if type(call.arguments[field]) is not expected_type:
+            raise CallRejected(f"wrong type for {field}")
+    if not spec.effects <= authority.effects:
+        raise CallRejected("effect not authorized")
+    if not spec.precondition(call, evidence):
+        raise CallRejected("precondition lacks trusted evidence")
+    return spec
+```
+
+The order example registers `cancel_order` with the effect `order.cancel` and with a precondition requiring a matching `get_order_status` observation. This client-side check establishes *admissibility from evidence*. It does not establish that the order remains unshipped. In [order_demo.py](agent_lab/order_demo.py), the service therefore holds a lock while checking its current status and revision and changing the state:
+
+```python
+with self._lock:
+    old = self._committed.get(key)
+    if old is not None:
+        old_order_id, old_revision, old_result = old
+        if (old_order_id, old_revision) != (
+            order_id, expected_revision
+        ):
+            raise ToolFailure(
+                "idempotency key reused with new arguments"
+            )
+        return old_result
+    if self.order.status != "unshipped":
+        raise ToolFailure("order no longer unshipped")
+    if self.order.revision != expected_revision:
+        raise ToolFailure("status observation is stale")
+    self.order.status = "cancelled"
+    self.order.revision += 1
+```
+
+`expected_revision` is the revision number read from the status service. The equality check implements **optimistic concurrency control**: a write based on an older revision is rejected. The lock makes the check and update atomic in this in-memory example. A real distributed service needs its own atomic database transaction or conditional update; a client-process lock cannot protect a remote database. The committed-request ledger keyed by $\kappa$ prevents a repeated *identical* cancellation from changing state twice. The ledger itself is only in memory and would need durable storage in a service that survives restarts.
+
 Suppose `create_grocery_cart(items)` times out after the server creates cart `C17`. The client has observed no result, but the server has changed state. A blind retry might create a second cart `C18`. If the service supports idempotency, the harness resends the same key $\kappa$ and the same arguments; the service should return the transaction associated with `C17`. If it does not, the harness queries the user's active carts and reconciles the intended item list before issuing another write. This trace explains why `timeout` and `not committed` are different states.
 
 ### Retry semantics and exactly-once illusions
@@ -69,6 +112,28 @@ Suppose `create_grocery_cart(items)` times out after the server creates cart `C1
 Classify calls as **read-only** (no intended state change), **idempotent writes** (repetition has the same final state as one execution), or **non-idempotent writes**. For a deterministic successful state update $f_x(s)$ caused by fixed argument $x$ in state $s$, idempotence means $f_x(f_x(s))=f_x(s)$. This equation concerns the state update, not the tool's returned message or error. `set_status(order, "cancelled")` may be idempotent because repeating it leaves the same final status. `charge_card(amount)` usually is not: repeating it can create a second charge. A network timeout means the client does not know whether the server **committed**, or made durable, the action. The result is an *epistemic* `unknown`: the client lacks knowledge of the downstream outcome. It has no evidence that the operation failed. For non-idempotent operations, use a server-recognized key $\kappa$ or query the authoritative record before retrying. Even with a key, test its **retention window**, the interval during which repeated requests are recognized as duplicates, and the server's exact matching rule.
 
 The event log should store `call_id`, $\kappa$, a **request hash** (a compact fingerprint of the submitted arguments), an attempt number, a **transport outcome** (whether the network exchange completed), and a downstream transaction identifier. On restart, the harness can reconcile an unfinished call rather than asking the model to guess. Model text is an unreliable substitute for an external side-effect ledger.
+
+The runnable example distinguishes a *known pre-commit rejection* from an outcome whose state is unknown to the caller. `ToolFailure` represents the first case, and `OutcomeUnknown` represents the second. An unexpected handler exception is conservatively classified as `unknown`: after an arbitrary exception, the harness cannot prove that no external effect occurred. The corresponding [tool adapter](agent_lab/tools.py) turns both classes into observations rather than silently treating an exception as success.
+
+```python
+try:
+    data = spec.handler(call)
+    return Observation(call.call_id, call.name, "ok", data)
+except OutcomeUnknown as exc:
+    return Observation(
+        call.call_id, call.name, "unknown", {"error": str(exc)}
+    )
+except ToolFailure as exc:
+    return Observation(
+        call.call_id, call.name, "error", {"error": str(exc)}
+    )
+except Exception as exc:
+    return Observation(
+        call.call_id, call.name, "unknown", {"error": str(exc)}
+    )
+```
+
+In the simulated timeout, `OrderService.cancel` changes the state and then raises `OutcomeUnknown`. The next proposal is a status read, not another cancellation. The final-answer verifier checks the service's current state. This is an executable counterexample to the mistaken implication `timeout ⇒ no commit`.
 
 ## 3. Grammar-constrained generation [27:00](https://www.youtube.com/watch?v=jXChFB4JSyw&t=1620s)
 
@@ -100,14 +165,14 @@ The dependency graph should include *conflict edges*, arrows that prevent simult
 
 In the grocery case, two independent product searches can run concurrently. Cart creation depends on their product identifiers and must wait for both results. If two workers can write the same cart, impose an ordering or use a service operation with conflict detection. Otherwise, the final cart may omit one worker's items even when both calls return success. Parallel latency is bounded by the search dependency path, while correctness also depends on the cart's concurrency semantics.
 
-Python is a programming language. The following sketch takes `calls`, an iterable of call objects with unique `.id` fields, and `dispatch`, an asynchronous function that executes one call. `asyncio.gather` waits for all supplied operations and returns their results.
+Python is a programming language. The following extension takes `calls`, an iterable of `ToolCall` objects with unique `call_id` fields, and `dispatch`, an asynchronous function that executes one read-only call. `asyncio.gather` waits for all supplied operations and returns their results. It is separate from the sequential harness because that harness has no dependency scheduler or concurrent event-log merge rule.
 
 ```python
 import asyncio
 
 async def run_independent(calls, dispatch):
     async def one(call):
-        return call.id, await dispatch(call)
+        return call.call_id, await dispatch(call)
     results = await asyncio.gather(*(one(c) for c in calls))
     return dict(results)  # IDs keep results attached to the right call.
 ```
