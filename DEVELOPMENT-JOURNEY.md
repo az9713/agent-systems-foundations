@@ -1,6 +1,6 @@
 # Development Journey — Agent Systems Foundations
 
-*12 September 2026 · [Read the chapters](index.html) · [Inspect the editorial study](textbook-style-report.html) · [View the public repository](https://github.com/az9713/agent-systems-foundations)*
+*12 September 2026 · [Read the public HTML edition](https://az9713.github.io/agent-systems-foundations/) · [Inspect the editorial study](textbook-style-report.html) · [View the public repository](https://github.com/az9713/agent-systems-foundations)*
 
 This account is reconstructed from the surviving request sequence, the four authored chapters, their source manifest, the 12-reference style report, and the final validation results. The complete command-by-command record of the earlier drafting sessions is unavailable here. Where that record is missing, this document describes an observable revision or an explicit reader request rather than inventing a tool trace.
 
@@ -126,6 +126,6 @@ No paid API total, token bill, or reliable wall-clock total was recorded for the
 
 ## 9. Where the project stands
 
-The [reading guide](index.html) links the four standalone chapters, the [style report](textbook-style-report.html), and this document. The [public repository](https://github.com/az9713/agent-systems-foundations) contains the authored notes, HTML, renderer, validation code, and a source manifest. It excludes raw transcripts, downloaded slides, private preview configuration, and local book files.
+The [live reading guide](https://az9713.github.io/agent-systems-foundations/) links the four standalone chapters, the [style report](textbook-style-report.html), and this document. The [public repository](https://github.com/az9713/agent-systems-foundations) contains the authored notes, HTML, renderer, validation code, and a source manifest. It excludes raw transcripts, downloaded slides, private preview configuration, and local book files. GitHub Pages reported a successful build, and the reading guide, this journey, a chapter, and the style report each returned HTTP 200 during the release check.
 
 The current scope is exactly the first four recordings used for this edition. Later course recordings may warrant further chapters, but their appearance on the playlist does not retroactively change what this edition covers. A future revision should re-check official course links and evolving provider documentation, test the new material against the same definition-before-use rule, and preserve the boundary between the source lectures and the independent extensions.
