@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Writing style study | Machine-learning references for CMU 11-768 notes</title>
+  <title>Technical writing style study | Agent-systems study</title>
   <style>
     :root { color-scheme: light dark; --paper:#f8f7f3; --card:#fff; --ink:#1c242d; --muted:#53606a; --line:#d8ddd9; --accent:#174b66; --soft:#eaf1f2; --gold:#9a621e; }
     @media (prefers-color-scheme: dark) { :root { --paper:#11191d; --card:#1a2429; --ink:#edf1ee; --muted:#b7c3c6; --line:#385057; --accent:#8bcce4; --soft:#20343b; --gold:#efb86c; } }
@@ -75,18 +75,18 @@
     <div class="shell">
       <div class="topline"><span>Independent agent-systems study · Editorial research</span><a href="index.html">Return to reading guide</a></div>
       <div class="hero">
-        <div class="eyebrow">Comparative style study · 12 source PDFs</div>
-        <h1>What the machine-learning textbooks teach about writing these agent notes</h1>
-        <p class="deck">A source-grounded style guide drawn from ten textbooks or monographs, one set of theory lecture notes, and one short algorithm paper. It distinguishes chapter architecture from the sentence and paragraph craft that makes technical reasoning readable.</p>
+        <div class="eyebrow">Comparative style study · 12 PDFs + 2 writing guides</div>
+        <h1>Writing rigorous agent-systems chapters</h1>
+        <p class="deck">A source-grounded style guide drawn from ten textbooks or monographs, one set of theory lecture notes, one short algorithm paper, and two technical-writing guides. It distinguishes chapter architecture from the sentence and paragraph craft that makes technical reasoning readable.</p>
         <p class="meta">Prepared 12 September 2026 · Page references below use the PDF viewer's page count, not the number printed on the page.</p>
       </div>
     </div>
   </header>
-  <div class="shell"><nav class="contents" aria-label="Report contents"><a href="#method">Method</a><a href="#elements">Teaching structure</a><a href="#prose">Prose craft</a><a href="#sources">Source portraits</a><a href="#house-style">Recommended house style</a><a href="#boundaries">Limits and cautions</a></nav></div>
+  <div class="shell"><nav class="contents" aria-label="Report contents"><a href="#method">Method</a><a href="#elements">Teaching structure</a><a href="#prose">Prose craft</a><a href="#writing-guides">Writing guides</a><a href="#sources">Source portraits</a><a href="#house-style">Recommended house style</a><a href="#boundaries">Limits and cautions</a></nav></div>
   <main id="main" class="shell">
     <section id="method">
       <h2>How the references were skimmed</h2>
-      <p class="lede">The comparison used 12 supplied PDFs. I inspected each file's front matter or introduction, its contents or section map, representative technical pages, and, where present, examples, exercises, labs, notation guides, or chapter notes. I also inspected rendered pages from six books to check how figures, equations, headings, and running text share the page. For the prose analysis, I returned to at least two passages in every PDF and examined how sentences introduce terms, carry an inference, interpret mathematics, and qualify claims. This remains a sample, not a cover-to-cover assessment of the books' technical claims.</p>
+      <p class="lede">The original comparison used 12 supplied PDFs. I inspected each file's front matter or introduction, its contents or section map, representative technical pages, and, where present, examples, exercises, labs, notation guides, or chapter notes. I also inspected rendered pages from six books to check how figures, equations, headings, and running text share the page. For the prose analysis, I returned to at least two passages in every PDF and examined how sentences introduce terms, carry an inference, interpret mathematics, and qualify claims. I subsequently read the two linked technical-writing guides in full. The PDF comparison remains a sample, not a cover-to-cover assessment of the books' technical claims.</p>
       <div class="method-list">
         <div><strong>Evidence unit</strong><p>Each observation below names a PDF-viewer page. The links target free online copies supplied by authors, publishers, or their institutions.</p></div>
         <div><strong>Inference unit</strong><p>“Use in the agent notes” is my editorial inference from the sampled style. It is not a claim that the source authors prescribe an agent curriculum.</p></div>
@@ -128,6 +128,32 @@
       </ol>
       <div class="sample"><div class="kicker">Original line-edit example: separate the mechanisms</div><p><strong>Compressed:</strong> “A status read makes cancellation safe when the request has a revision and an idempotency key.”</p><p><strong>Developed:</strong> “A status read supplies evidence that the order was unshipped when it was queried. The cancellation service checks the current revision before changing the order. An idempotency key addresses a different failure: a response may be lost after the change commits. Neither mechanism grants the agent permission to cancel. That permission comes from the user's authorization.”</p></div>
       <p class="small">This section analyzes prose mechanisms rather than imitating the source authors' language. Page references identify sampled passages; each recommendation for the agent notes is an editorial inference.</p>
+    </section>
+
+    <section id="writing-guides">
+      <h2>What the technical-writing guides add</h2>
+      <p class="lede">The twelve PDFs establish the chapter's pedagogical depth and logical progression. Two writing guides sharpen the prose at sentence, paragraph, and evidence level. Their advice was read as guidance for scientific writing, then adapted to a graduate textbook whose subject includes probabilistic agents and executable systems.</p>
+      <div class="books">
+        <article class="book"><div class="type">Technical-writing guide</div><h3><a href="https://gernot-heiser.org/style-guide.html">Tips and Guidance for Students and ECRs Writing Papers and Reports</a></h3><p class="author">Gernot Heiser · accessed 12 September 2026</p><p>Heiser's central editorial test is whether the reader has already been given the knowledge needed to understand the next sentence. He also asks for a clear point at sentence, paragraph, and section scale. His advice on concision, active voice, measurements, figures, acronyms, and references provides concrete checks on a draft.</p><p class="source-line"><a href="https://gernot-heiser.org/style-guide.html">Read the complete guide</a></p></article>
+        <article class="book"><div class="type">Technical-writing guide</div><h3><a href="https://www.eleceng.adelaide.edu.au/personal/dabbott/wiki/index.php/Guide_to_technical_writing">Guide to technical writing</a></h3><p class="author">Derek Abbott · accessed 12 September 2026</p><p>Abbott emphasizes a restrained scientific voice, exact vocabulary, consistent grammar, and figures and equations that function as parts of an argument. His distinctions between proof and empirical support, concrete and vague claims, and stable and historical tense are especially useful when agent-system claims span mathematics, experiments, and product documentation.</p><p class="source-line"><a href="https://www.eleceng.adelaide.edu.au/personal/dabbott/wiki/index.php/Guide_to_technical_writing">Read the complete guide</a></p></article>
+      </div>
+      <h3>Rules adopted for these chapters</h3>
+      <ol class="sequence">
+        <li><strong>Maintain the reader's knowledge state.</strong> Define a technical term or symbol before it does substantive work. State its domain, assumptions, and units when relevant. If two definitions depend on each other, give a short informal orientation before the formal pair. Restore context after a long gap, while keeping names stable.</li>
+        <li><strong>Give each paragraph a discernible purpose.</strong> A paragraph may state a claim, derive its mechanism, and explain its consequence. Separate those moves into sentences when each contains a distinct idea. Let the causal or logical need for the next paragraph supply the transition.</li>
+        <li><strong>Make agency and evidence explicit.</strong> Active voice identifies who proposes, authorizes, executes, or verifies an action. Passive voice remains useful when the actor has no bearing on the claim. Replace “better” or “significant” with a property, baseline, magnitude, and uncertainty where available. Reserve “prove” for a formal deduction; identify empirical observations as observations.</li>
+        <li><strong>Make mathematical prose grammatical.</strong> Define each symbol before an equation, punctuate displayed equations as parts of sentences, and explain the result in words. A figure caption should identify whether its content is theoretical, simulated, or measured, state the relevant conditions, and tell the reader what the comparison establishes.</li>
+        <li><strong>Use exact time and reference language.</strong> Present tense suits definitions and stable results; date historical or changing facts. Expand acronyms at first use. Replace “recently” and “later” with a date or a specific section when the reference matters. Keep spelling and punctuation consistent throughout the project.</li>
+      </ol>
+      <h3>Conflicts resolved for graduate agent-systems prose</h3>
+      <table class="compare"><thead><tr><th scope="col">Tension</th><th scope="col">House rule</th></tr></thead><tbody>
+        <tr><td>Brevity versus explanation</td><td>Remove words that do no work. Keep the definition, crucial inference, interpretation, and limitation. The reader's request for a little more explanation takes precedence over a short-word-count ideal.</td></tr>
+        <tr><td>Paper structure versus textbook voice</td><td>Use informative titles and coherent sections. Do not impose a paper's abstract or section-length rules on a chapter. Avoid “this section will” narration when the subject itself supplies the transition.</td></tr>
+        <tr><td>Absolute word bans versus precise meaning</td><td>Abbott discourages words such as “could,” “would,” “should,” and “belief.” Retain a modal when it conveys a defined possibility, counterfactual, or recommendation. Define a <em>belief state</em> as a probability distribution over possible states; do not use a personal belief as empirical evidence.</td></tr>
+        <tr><td>Typographic rules versus useful notation</td><td>Prefer an English lead-in and avoid nested parentheses when they improve reading. Keep conventional, locally defined symbols and descriptive code identifiers rather than forcing single-letter names. Mark newly defined terms consistently; the definition matters more than italics or boldface.</td></tr>
+        <tr><td>Different national conventions</td><td>Use consistent US English and the Oxford comma for this project. Do not combine incompatible punctuation prescriptions from the two guides.</td></tr>
+      </tbody></table>
+      <p class="small">The five house rules and conflict decisions above are editorial adaptations, not quotations or claims that both authors endorse every resolution. The two guides are additional references; the twelve PDF portraits below retain their original source-specific scope.</p>
     </section>
 
     <section id="sources">
