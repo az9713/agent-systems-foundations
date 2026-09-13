@@ -10,15 +10,7 @@ The **harness** is the software that checks a proposed action, invokes permitted
 
 $$\operatorname{allow}(a,e,U)=\operatorname{inScope}(a,U)\land\operatorname{preconditions}(a,e)\land\neg\operatorname{forbidden}(a,U).$$
 
-The scope and prohibition predicates are not logical complements. Suppose $U$ grants order-management actions on order O-1 but expressly prohibits refunds. Assume for this comparison that the evidence satisfies each action's preconditions.
-
-| Proposed action | In scope? | Explicitly forbidden? | Admitted? |
-|---|---|---|---|
-| Cancel order O-1 | Yes | No | Yes |
-| Refund order O-1 | Yes, under the broad order-management grant | Yes, by the specific exception | No |
-| Read order O-2 | No; the grant covers only O-1 | No explicit prohibition is needed | No |
-
-For the last action, $\neg\operatorname{forbidden}(a,U)$ is true while $\operatorname{inScope}(a,U)$ is false. The absence of a ban does not create permission. For the refund, a specific denial overrides the broader grant. If “forbidden” were instead defined to mean every action outside scope, the two predicates would be complements by definition and the separate prohibition check would be redundant. Here it records explicit exceptions to positive grants. The companion harness checks positive effect grants through `Authority.effects`; it has neither a separate deny list nor a general target-scope gate. Its toy service contains only order O-1. A deployed harness would also check the authorized target before invoking a tool, including a read-only tool.
+The two predicates are not logical complements. Suppose the user says, “Organize the files in Folder A, but do not delete any files.” Renaming a file in Folder A is in scope and not forbidden. Deleting a file there is within the broad organizing task but explicitly forbidden. Reading a file in Folder B is not explicitly forbidden, yet it is out of scope: the user granted no access to Folder B. Thus $\neg\operatorname{forbidden}(a,U)$ does not imply $\operatorname{inScope}(a,U)$. The absence of a ban is not a grant. If “forbidden” instead included every out-of-scope action, the predicates would be complements by definition, and the separate prohibition check would be redundant. The companion harness checks positive grants for tool effects; it does not implement a separate deny list or a general target-scope check.
 
 This gate is necessary, but it does not guarantee a safe outcome. The harness evaluates preconditions against evidence $e$ because it usually cannot inspect the actual state $s$ directly. Let $L(a)$ be the loss that could result from executing $a$; uncertainty about the state and downstream effects makes $L(a)$ a random quantity. The conditional expectation $\mathbb E[L(a)\mid e]$ is its mean given the available evidence.
 

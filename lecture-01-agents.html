@@ -16,38 +16,7 @@ a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max
 <p>An <strong>agent</strong> is a system that selects actions in response to observations while pursuing a goal. Consider a customer-support agent asked to cancel an order if it has not shipped and otherwise explain the return options. A stale confirmation email cannot establish the current shipping status. A wrong cancellation may affect fulfillment, while a wrong answer may cause the customer to miss a return deadline. The agent must obtain evidence, choose an action that advances the request, and remain within the authority the customer granted. The consequences also depend on <strong>reversibility</strong>, whether an action's effects can be reliably undone.</p>
 <p>The <strong>harness</strong> is the software that checks a proposed action, invokes permitted tools, and records their results. Let $a$ be a proposed action, $s$ the actual state of the external environment, $e$ the trusted evidence currently available to the harness, and $U$ the user's authorization policy: the permissions and prohibitions applicable to this task. The predicate $\operatorname{inScope}(a,U)$ is true when $U$ positively grants the proposed kind of action on its target for this task, before any specific exclusion is applied. The predicate $\operatorname{preconditions}(a,e)$ is true when the evidence establishes the facts required before $a$ may be attempted. The predicate $\operatorname{forbidden}(a,U)$ is true when $U$ explicitly prohibits $a$, including an exception to a broader grant. The symbols $\land$ and $\neg$ mean logical “and” and “not.” The admission predicate $\operatorname{allow}$ is</p>
 <p>$$\operatorname{allow}(a,e,U)=\operatorname{inScope}(a,U)\land\operatorname{preconditions}(a,e)\land\neg\operatorname{forbidden}(a,U).$$</p>
-<p>The scope and prohibition predicates are not logical complements. Suppose $U$ grants order-management actions on order O-1 but expressly prohibits refunds. Assume for this comparison that the evidence satisfies each action's preconditions.</p>
-<table>
-<thead>
-<tr>
-<th>Proposed action</th>
-<th>In scope?</th>
-<th>Explicitly forbidden?</th>
-<th>Admitted?</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Cancel order O-1</td>
-<td>Yes</td>
-<td>No</td>
-<td>Yes</td>
-</tr>
-<tr>
-<td>Refund order O-1</td>
-<td>Yes, under the broad order-management grant</td>
-<td>Yes, by the specific exception</td>
-<td>No</td>
-</tr>
-<tr>
-<td>Read order O-2</td>
-<td>No; the grant covers only O-1</td>
-<td>No explicit prohibition is needed</td>
-<td>No</td>
-</tr>
-</tbody>
-</table>
-<p>For the last action, $\neg\operatorname{forbidden}(a,U)$ is true while $\operatorname{inScope}(a,U)$ is false. The absence of a ban does not create permission. For the refund, a specific denial overrides the broader grant. If “forbidden” were instead defined to mean every action outside scope, the two predicates would be complements by definition and the separate prohibition check would be redundant. Here it records explicit exceptions to positive grants. The companion harness checks positive effect grants through <code>Authority.effects</code>; it has neither a separate deny list nor a general target-scope gate. Its toy service contains only order O-1. A deployed harness would also check the authorized target before invoking a tool, including a read-only tool.</p>
+<p>The two predicates are not logical complements. Suppose the user says, “Organize the files in Folder A, but do not delete any files.” Renaming a file in Folder A is in scope and not forbidden. Deleting a file there is within the broad organizing task but explicitly forbidden. Reading a file in Folder B is not explicitly forbidden, yet it is out of scope: the user granted no access to Folder B. Thus $\neg\operatorname{forbidden}(a,U)$ does not imply $\operatorname{inScope}(a,U)$. The absence of a ban is not a grant. If “forbidden” instead included every out-of-scope action, the predicates would be complements by definition, and the separate prohibition check would be redundant. The companion harness checks positive grants for tool effects; it does not implement a separate deny list or a general target-scope check.</p>
 <p>This gate is necessary, but it does not guarantee a safe outcome. The harness evaluates preconditions against evidence $e$ because it usually cannot inspect the actual state $s$ directly. Let $L(a)$ be the loss that could result from executing $a$; uncertainty about the state and downstream effects makes $L(a)$ a random quantity. The conditional expectation $\mathbb E[L(a)\mid e]$ is its mean given the available evidence.</p>
 <p>A system may set two consequence thresholds, $\tau_0&lt;\tau_1$, for actions that already pass the admission gate. It may execute automatically when estimated loss is below $\tau_0$ and request confirmation between the thresholds. Above $\tau_1$, it refuses the action. An explicit prohibition also requires refusal, regardless of the estimate. Expected loss is difficult to estimate, so high-impact categories such as payments, deletion, disclosure, and publication require auditable rules. Before confirmation, the user should be able to inspect the proposed action and its supporting evidence. The thresholds are design parameters, not universal constants.</p>
 <p>For the order request, evidence $e$ should include the order identifier, a status returned by an authoritative service, and the time of that response. The cancellation gate can require that these fields match the requested order and are fresh enough for the service's stated consistency rules. Even then, the order might ship between the status read and the cancellation request. The cancellation service must check the shipping precondition again as part of the same <strong>atomic transaction</strong> that commits cancellation. An atomic transaction checks the condition and changes the state without another operation intervening. This prevents a <strong>race condition</strong>, an error caused by the unpredictable ordering of concurrent operations. A client-side status check limits uninformed proposals; the server-side check addresses the race between observation and execution.</p>
