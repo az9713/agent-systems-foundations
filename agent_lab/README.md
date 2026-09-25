@@ -11,9 +11,9 @@ model variability.
 | 2, tools | `tools.py`, `order_demo.py` | Effect set, schema, precondition, atomic conditional update, uncertain outcome |
 | 3, context | `context.py` | Token-volume equations, KV-cache size, knapsack, compact state |
 | 4, memory | `memory.py` | Scope and validity predicates, budgeted retrieval, file-backed persistence |
-| 5, planning | `planning.py` | Dependency graph, ready set, total work, and critical-path span |
-| 6–7, evaluation | `evaluation.py` | pass@k, multidimensional outcomes, and weighted rubrics |
-| 8–9, training | `training.py` | Masked cross-entropy, REINFORCE estimates, and group-centered advantages |
+| 5, planning | `planning.py` | Dependency graph, ready set, work/span, reliability product, and replanning rule |
+| 6–7, evaluation | `evaluation.py` | pass@k, multidimensional outcomes, weighted rubrics, and coordinate transforms |
+| 8–9, training | `training.py` | Masked loss, effective mixtures, reward-to-go, REINFORCE, and group diagnostics |
 
 From the repository root, run:
 

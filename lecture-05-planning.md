@@ -4,7 +4,7 @@
 
 ## 0. Plans must survive contact with the environment [00:00](https://www.youtube.com/watch?v=S8v-dR4s29M&t=0s)
 
-A laboratory wants an agent to procure a GPU workstation. The agent must compare vendors, check whether each configuration satisfies a memory requirement, verify component compatibility, and prepare a requisition. Vendor searches can run independently. Compatibility checks depend on the returned specifications. The requisition depends on the comparison. If no configuration qualifies, the agent must revise its search rather than execute the original plan blindly.
+A laboratory wants an agent to procure a graphics processing unit (GPU) workstation. The agent must compare vendors, check whether each configuration satisfies a memory requirement, verify component compatibility, and prepare a requisition. Vendor searches can run independently. Compatibility checks depend on the returned specifications. The requisition depends on the comparison. If no configuration qualifies, the agent must revise its search rather than execute the original plan blindly.
 
 A **plan** is an explicit representation of intended future behavior. It specifies actions or subgoals and at least some relationships among them. A plan differs from a **trajectory**, the actions and observations that actually occur. Before execution, a plan can contain predictions. After execution begins, observations may invalidate those predictions.
 
@@ -23,6 +23,20 @@ $$R_t=\{v\in V_t\setminus C_t:\operatorname{pred}(v)\subseteq C_t\},$$
 where $\operatorname{pred}(v)=\{u:(u,v)\in E_t\}$ is the set of predecessors of $v$, $\subseteq$ means “is a subset of,” and $\setminus$ removes completed tasks. This definition separates task readiness from model confidence. A model may be confident about a task whose required evidence has not arrived.
 
 The workstation plan has four independent search vertices, four compatibility checks, one comparison, and one requisition draft. The requisition action should not include purchase authority. Producing a plan does not grant the effects needed to execute it.
+
+### A plan is a typed, revisable hypothesis
+
+The graph alone is too weak to execute. Each edge must state what information or state change flows from its source to its destination. Let $\sigma_{uv}$ be the schema promised by task $u$ and required by task $v$. The dependency is **type-correct** when the output schema of $u$ entails the input schema of $v$. Written formally,
+
+$$O_u\models\sigma_{uv}\quad\land\quad \sigma_{uv}\models I_v.$$
+
+The first relation says that a successful output from $u$ contains the fields promised on the edge. The second says that these fields are sufficient for $v$'s declared input. A free-form sentence such as “Vendor A looks good” does not satisfy a successor that needs a product identifier, quoted price, memory capacity, power requirement, evidence location, and observation time.
+
+The workstation plan can use the following contracts. A search task returns a set of dated offers. A compatibility task consumes one offer and the laboratory requirements, then returns a Boolean verdict together with reasons. The comparison task consumes all verified offers and verdicts, then returns a ranked table. The requisition task consumes the table and the selected offer, then creates a draft. The task does not submit the draft. This last distinction makes the authority boundary visible in the plan itself.
+
+Three invariants should hold after every plan revision. A **graph invariant** requires acyclicity and resolvable dependencies. An **interface invariant** requires type-correct edges. An **authority invariant** requires $A_v\subseteq U_t^+$ and $A_v\cap U_t^-=\varnothing$ for every task $v$, where $U_t^+$ is the set of granted effects and $U_t^-$ is the set of denied effects at step $t$. These invariants are mechanically checkable even when the task descriptions remain natural language.
+
+The plan is also a hypothesis about the future. Its durations, success probabilities, and external conditions are estimates. Execution tests the hypothesis. A useful plan representation therefore stores both the current graph revision and the evidence on which that revision depends. A price observed yesterday and an inventory value observed two minutes ago should not have the same validity horizon.
 
 ## 1. Decomposition changes the problem [13:30](https://www.youtube.com/watch?v=S8v-dR4s29M&t=810s)
 
@@ -46,6 +60,24 @@ $$P(\text{plan succeeds})=\prod_{v\in V}q_v.$$
 
 If a plan contains 20 indispensable tasks and each succeeds with probability $0.98$, the product is $0.98^{20}\approx0.668$. Decomposition made the work legible, but it created more interfaces at which errors can accumulate. Independence is usually false: a mistaken requirement can cause several downstream failures together. The product is therefore a diagnostic model, not a universal reliability law.
 
+The companion implementation makes the assumptions visible at the call site:
+
+```python
+from agent_lab.planning import plan_success_probability, should_replan
+
+diagnostic = plan_success_probability([0.97] * 10)
+assert round(diagnostic, 3) == 0.737
+
+assert should_replan(
+    current_value=0.80,
+    candidate_value=0.81,
+    replan_cost=0.10,
+    current_plan_valid=False,
+)
+```
+
+Invalidity forces replanning even when the estimated value improvement is smaller than its cost. The numerical utility rule applies only while the current plan remains admissible.
+
 ### Global constraints require a separate check
 
 Let $y_v$ be the verified output of task $v$, and let $y=(y_v)_{v\in V}$ collect all task outputs. A **global constraint** is a predicate $H(y)$ that cannot be decided from one output alone. A travel plan might require total cost below a budget, non-overlapping times, and sufficient transfer intervals. The harness should evaluate $H(y)$ before it authorizes any final commitment.
@@ -55,6 +87,20 @@ For the workstation, define price $p_v$ for each selected component, total budge
 $$\sum_v p_v\le B\quad\land\quad K(y)=\text{true}.$$
 
 The sum aggregates a cross-task quantity. The compatibility predicate evaluates relations among components. Neither condition can be delegated away by checking components separately.
+
+The distinction between local completion and global feasibility is central to [TravelPlanner](https://arxiv.org/abs/2402.01622). Its tasks require a complete itinerary that satisfies temporal, budgetary, transportation, and preference constraints across several days. The original paper introduced 1,225 planning intents and a sandbox backed by nearly four million records. It reported that strong language agents frequently gathered plausible local facts while violating at least one global constraint. The benchmark is useful here because it isolates a failure that fluent prose can conceal: every paragraph of an itinerary may sound reasonable while the itinerary as a whole is infeasible.
+
+For the workstation, let binary variable $z_i$ equal one when offer $i$ is selected and zero otherwise. Let $p_i$ be price, $m_i$ memory capacity, and $e_i$ estimated power demand. A simplified selection problem is
+
+$$\begin{aligned}
+\min_z\quad &\sum_i p_i z_i\\
+\text{subject to}\quad &\sum_i z_i=1,\\
+&\sum_i m_i z_i\ge M,\\
+&\sum_i e_i z_i\le E,\\
+&z_i\in\{0,1\}\quad\text{for every }i.
+\end{aligned}$$
+
+The constants $M$ and $E$ are the required memory and available power. The first constraint selects exactly one offer. The next two enforce requirements that cannot be recovered from a price ranking alone. This small integer program should not be delegated to prose once the offers have been normalized. Explicit enumeration or a deterministic solver gives a stronger check.
 
 ## 2. Formal planning and language plans [24:30](https://www.youtube.com/watch?v=S8v-dR4s29M&t=1470s)
 
@@ -67,6 +113,18 @@ The strength of this representation is checkability. Its weakness is the modelin
 A language plan replaces exact operators with text descriptions. It can express broad intent but may hide preconditions, effects, and dependencies. A program occupies an intermediate position. Control flow and data dependencies can be checked syntactically, while external calls still depend on an uncertain environment. [Code as Policies](https://arxiv.org/abs/2209.07753) illustrates how executable programs can represent robot policies; [ProgPrompt](https://arxiv.org/abs/2209.11302) similarly uses program-like structure for situated tasks.
 
 The representation should match the failure that matters. Use a DAG when dependencies and parallelism matter. Use a state machine when recovery transitions matter. Use code when deterministic transformations and checks can be executed. Keep natural language for goals and conditions whose semantics cannot be reduced safely to a fixed schema.
+
+Classical planning often represents an action by preconditions, added facts, and deleted facts. This family of representations descends from the [Stanford Research Institute Problem Solver (STRIPS)](https://doi.org/10.1016/0004-3702(71)90010-5). Let $F$ be a finite set of Boolean facts and let state $s\subseteq F$ contain the facts currently true. An action $a$ has precondition set $\operatorname{pre}(a)$, add set $\operatorname{add}(a)$, and delete set $\operatorname{del}(a)$. When $\operatorname{pre}(a)\subseteq s$, the next state is
+
+$$T(s,a)=\bigl(s\setminus\operatorname{del}(a)\bigr)\cup\operatorname{add}(a).$$
+
+For example, `draft_requisition` may require the facts `offer_selected` and `compatibility_verified`. It adds `draft_exists`. It does not add `purchase_submitted`. The closed symbolic vocabulary makes validity decidable for the modeled facts. It also hides everything omitted from that vocabulary. A planner cannot reason about stale inventory if freshness is not represented.
+
+[PlanBench](https://arxiv.org/abs/2206.10498) evaluates language models on planning problems derived from formal domains, including obfuscated variants that reduce help from familiar names. Its value is methodological. Plan generation, plan validation, goal recognition, and reasoning about action order are distinct measurements. A model that can explain a plan may still emit an invalid operator sequence. A harness should validate symbolic fragments with a planner or simulator whenever their semantics are available.
+
+Program plans offer a different compromise. Control flow, data flow, and assertions become executable. Calls into an open environment remain uncertain. [Code as Policies](https://arxiv.org/abs/2209.07753) and [ProgPrompt](https://arxiv.org/abs/2209.11302) show how program structure can express reusable skills and situated plans. Code moves some ambiguities into syntax that compilers and tests can check. It also expands the possible side effects if the runtime is over-privileged.
+
+[Tree of Thoughts](https://arxiv.org/abs/2305.10601) treats language reasoning as explicit search over candidate intermediate thoughts, with evaluation and backtracking. This is a search procedure over proposed reasoning states. It becomes an execution planner only after thoughts are grounded in environment actions, state transitions, and verifiers. [ReAct](https://arxiv.org/abs/2210.03629) instead interleaves reasoning with actions and observations. Its structure motivates adaptive planning because external evidence can update the next reasoning step. Neither representation supplies authority or an independent outcome check.
 
 ### Affordance-grounded action selection
 
@@ -104,6 +162,19 @@ $$a_t\in A(P_t)\cap U_t^+\quad\land\quad a_t\notin U_t^-.$$
 
 The plan narrows authority; it cannot enlarge it. Retrieved text, a worker message, or a revised plan proposed by the model must not mutate $U_t^+$.
 
+### Plan repair should preserve verified work
+
+Replacing an entire plan after every surprise discards information and invites regressions. Let $P_t$ be the current plan and $P'$ a valid candidate. Define $\Delta(P_t,P')$ as a plan-edit cost. It may count inserted vertices, deleted vertices, changed interfaces, and invalidated evidence. A repair policy can solve
+
+$$P_{t+1}\in\operatorname*{arg\,max}_{P'\in\mathcal P_t}
+\left[J(P'\mid\beta_{t+1})-\lambda\Delta(P_t,P')\right],$$
+
+where $\mathcal P_t$ is the set of plans satisfying the current hard constraints and $\lambda\ge0$ prices disruption. The expression $\operatorname*{arg\,max}$ denotes the set of plans attaining the largest value. This objective prefers high-value plans, while retaining verified branches when two candidates are otherwise similar.
+
+Suppose Vendor B withdraws its offer after all four searches have completed. The failed offer and its compatibility result are invalid. Searches for Vendors A, C, and D remain supported by their own evidence. The comparison must rerun because its input set changed. The draft must rerun because it depends on the comparison. A minimal repair removes the B branch, adds a replacement search if fewer than the required number of candidates remain, and invalidates only descendants of changed outputs.
+
+This procedure requires provenance. For every output $y_v$, record the producing task, plan revision, input identifiers, tool-result identifiers, and validity interval. Descendant invalidation can then follow actual data dependencies. Without provenance, the manager must either trust stale derived text or repeat the entire plan.
+
 ## 4. Thinking, observing, and acting consume different resources [44:30](https://www.youtube.com/watch?v=S8v-dR4s29M&t=2670s)
 
 An agent can spend compute on internal reasoning, information acquisition, or external action. Let $n_r$, $n_o$, and $n_a$ be the numbers of reasoning, observation, and action operations. Let their average costs be $c_r$, $c_o$, and $c_a$. The run cost is
@@ -119,6 +190,20 @@ $$\operatorname{IG}(q)=H(\beta_t)-\mathbb E_{o\sim q}[H(\beta_{t+1})].$$
 The expectation averages over possible observations returned by $q$. A high information-gain read can be preferable to more internal reasoning when the uncertainty concerns external state.
 
 This does not imply “observe as much as possible.” Reads have latency, token cost, privacy consequences, and sometimes rate limits. A decision rule can select observation $q$ when its expected improvement in downstream value exceeds its cost. The estimate should be evaluated empirically for the task distribution.
+
+### More reasoning is useful only when it can change the decision
+
+Let $d$ be the next external decision and let $r$ be an additional reasoning computation. Define the **value of computation** as
+
+$$\operatorname{VOC}(r)=
+\mathbb E\left[\max_d U(d\mid h_t,r)\right]
+-\max_d\mathbb E\left[U(d\mid h_t)\right]-c_r,$$
+
+where $U$ is downstream utility and $c_r$ is the cost of the reasoning computation. The first term allows the decision to depend on the result of $r$. The second chooses immediately from current history $h_t$. Extra reasoning is justified when the expected decision improvement exceeds its cost.
+
+The equation identifies **overthinking**. If a deterministic compatibility script already proves that an offer violates the power limit, another long verbal analysis cannot make that offer admissible. It can only spend tokens or introduce doubt. Conversely, if the missing quantity is current stock, internal reasoning cannot observe it. The correct operation is a read.
+
+Commitment changes the comparison. Let $L(a)$ be the loss if action $a$ is wrong and let $\varrho(a)\in[0,1]$ be its reversibility, with one denoting fully reversible. An approximate commitment cost is $(1-p(a))L(a)(1-\varrho(a))$, where $p(a)$ is the estimated probability that the action is correct. Drafting a requisition is reversible and can tolerate more uncertainty. Submitting an order is difficult to reverse and should require stronger evidence and explicit authority. The formula organizes the decision. Hard prohibitions remain hard constraints.
 
 ## 5. Parallel execution has a work–span limit [57:00](https://www.youtube.com/watch?v=S8v-dR4s29M&t=3420s)
 
@@ -148,6 +233,14 @@ work, span, lower_bound = work_span_bound(tasks, workers=2)
 
 The function validates a static DAG. It does not schedule calls, isolate workers, or repair a plan after new evidence. Those operations belong in the harness control plane.
 
+Long-horizon failure is not explained by context length alone. [Vending-Bench](https://arxiv.org/abs/2502.15840) places an agent in a simulated business that must manage inventory, pricing, orders, and daily fees over runs exceeding twenty million tokens. The paper reports high run-to-run variance and failures involving delivery schedules, forgotten orders, and persistent tangents. It found no clear association between failure and the point at which the context window became full. The relevant state can fit in a compact ledger, yet the policy can still update that ledger incorrectly or fail to act on it.
+
+Let $e_t$ be a state-estimation error introduced at step $t$. Suppose a fraction $\alpha\in[0,1]$ of the prior error persists after each verification cycle and new error $\epsilon_{t+1}$ is introduced. A simple recurrence is
+
+$$e_{t+1}=\alpha e_t+\epsilon_{t+1}.$$
+
+Repeated verification is useful only when it lowers $\alpha$ or the magnitude of new errors. Merely restating a mistaken summary can make $\alpha$ close to one. External ledgers, reconciliation against the environment, and invariant checks can interrupt persistence. A long-horizon harness therefore needs durable state and periodic reconciliation rather than only a longer conversational transcript.
+
 ## 6. Multi-agent coordination is an allocation problem [68:30](https://www.youtube.com/watch?v=S8v-dR4s29M&t=4110s)
 
 A **manager** assigns tasks and integrates results. A **worker** executes a bounded task under delegated authority. Let $w\in\mathcal W$ index workers. For task $v$, let $q_{vw}$ be the estimated success probability if worker $w$ performs it, $c_{vw}$ its cost, and $\ell_{vw}$ its latency. Let binary variable $x_{vw}$ equal one when $v$ is assigned to $w$ and zero otherwise.
@@ -162,6 +255,12 @@ Multiple agents help when tasks are separable, workers can receive sufficient lo
 
 [Multi-Agent Computer Use](https://arxiv.org/abs/2606.01533) uses a manager, a dependency graph, workers, and replanning for long-horizon computer tasks. Its reported ablations are empirical results for specified models and tasks. They do not prove that adding agents generally improves performance. A single-agent baseline with the same total model calls is necessary to separate coordination gains from additional inference compute.
 
+The 2026 [Multi-Agent Computer Use](https://arxiv.org/abs/2606.01533) study makes the graph operational. Its manager decomposes a long computer task into a DAG, exposes the ready frontier to workers, and revises the graph when observations change the plan. The paper reports improvements across several computer-use benchmarks and about a 1.5-fold wall-clock improvement on one long-horizon benchmark. These are conditional empirical results. The relevant causal question is whether coordination improved the outcome after controlling for total inference, tool access, and wall-clock resources.
+
+For the workstation, assume four searches take eight minutes each, but each worker needs a two-minute briefing and the manager needs one minute to integrate each result. With four workers, the search phase takes approximately $2+8+4=14$ minutes when briefings overlap and integration is serial. With one worker, it takes approximately $4(2+8)+4=44$ minutes under the same accounting. The speedup is $44/14\approx3.14$, below the ideal factor of four. If all searches depend on one shared browser session, the effective speedup can fall to one.
+
+Coordination quality also depends on error correlation. If all workers use the same model, prompt, and flawed requirement summary, their failures are not independent. Diversity helps only when it changes relevant error modes and the manager can reconcile conflicting outputs. Assigning ornamental roles such as “researcher” and “critic” does not create statistical or functional diversity by itself.
+
 Each worker should receive a delegation contract $(g_v,c_v,A_v,O_v,\operatorname{verify}_v)$. The contract contains its goal, context, authority, required output, and verifier. A worker result is an observation with provenance. It is not a command to the manager and cannot expand the manager's permissions.
 
 ### Hierarchical, contingent, and resource-constrained plans
@@ -170,7 +269,7 @@ A flat task graph states which tasks depend on which outputs. It does not state 
 
 $$v\Longrightarrow_m \operatorname{body}(m),\qquad \operatorname{head}(m)=v.$$
 
-The double arrow denotes refinement rather than execution. For example, “validate the machine” may refine into checking physical dimensions, power capacity, firmware support, and operating-system drivers. A method is applicable only when its stated conditions hold. This idea is formalized in systems such as [SHOP2](https://www.cs.umd.edu/projects/shop/description.html), whose ordered task decomposition mixes domain knowledge with search.
+The double arrow denotes refinement rather than execution. For example, “validate the machine” may refine into checking physical dimensions, power capacity, firmware support, and operating-system drivers. A method is applicable only when its stated conditions hold. This idea is formalized in systems such as the [Simple Hierarchical Ordered Planner 2 (SHOP2)](https://www.cs.umd.edu/projects/shop/description.html), whose ordered task decomposition mixes domain knowledge with search.
 
 A **contingent plan** contains branches that depend on observations. Let $o$ be a possible observation and $P_o$ be the continuation selected after observing $o$. A contingent plan can be written as a policy tree whose internal nodes are actions and whose outgoing edges are observations. It differs from a fixed sequence because the future action is not chosen until information arrives. The workstation plan may branch on whether a vendor reports a compatible power supply or whether stock remains available.
 
@@ -185,11 +284,11 @@ Resources add another constraint. Let task $v$ consume $r_{v,j}$ units of resour
 
 $$\sum_{v\in X_t}r_{v,j}\le B_j$$
 
-for every resource type $j$ and every concurrently executing set $X_t$. A resource may be a worker slot, browser session, GPU, API quota, or dollar budget. Dependency feasibility and resource feasibility are separate. Four tasks may all be ready while only two may run.
+for every resource type $j$ and every concurrently executing set $X_t$. A resource may be a worker slot, browser session, GPU, application programming interface (API) quota, or dollar budget. Dependency feasibility and resource feasibility are separate. Four tasks may all be ready while only two may run.
 
 These distinctions yield a practical representation rule. Use hierarchy to express reusable decomposition knowledge. Use contingent branches when observations change the next action. Use a belief state when observations are incomplete or noisy. Use explicit resource constraints when concurrency competes for scarce capacity. A natural-language checklist can describe all four, but it cannot reliably enforce any of them without structured fields and validators.
 
-## 7. What the planning abstraction captures and misses
+### Scope and limits of the planning abstraction
 
 The DAG exposes dependency, readiness, parallelism, and critical paths. The task contract exposes interfaces and authority. Replanning connects execution evidence to plan repair. These abstractions still omit several effects.
 
@@ -204,7 +303,7 @@ Treat the plan as executable state under version control. Record its origin, cur
 ### Exercises
 
 1. A plan has tasks with durations $(6,4,5,3)$ and edges $1\to3$, $2\to3$, and $3\to4$. Compute $W$, $S$, and the work–span lower bound for two workers.
-2. Construct an authorization policy and plan for “summarize all PDF files in Folder A, but do not upload or delete anything.” Give an action that is in the plan but forbidden, and an action that is neither planned nor explicitly forbidden.
+2. Construct an authorization policy and plan for “summarize all Portable Document Format (PDF) files in Folder A, but do not upload or delete anything.” Give an action that is in the plan but forbidden, and an action that is neither planned nor explicitly forbidden.
 3. A manager decomposes a task into ten indispensable independent subtasks. Each worker succeeds with probability $0.97$. Under the independence model, compute whole-task success. State two reasons the model may be misleading.
 4. Design a replan trigger for the workstation task that distinguishes a price change, a missing specification, and an authorization change.
 
@@ -215,6 +314,14 @@ Treat the plan as executable state under version control. Record its origin, cur
 3. The product is $0.97^{10}\approx0.737$. Shared prompts and shared dependencies create correlated failures. The model also ignores integration errors and assumes every subtask is indispensable.
 4. A price change can update the affected vertex and recompute the comparison. A missing specification should block its compatibility check and add an evidence-gathering task. An authorization change must invalidate every vertex whose effect is no longer granted; optimization cost cannot override that trigger.
 
+The first exercise also shows why work and span must be reported together. The two-worker average-load term is nine time units, but the dependency chain requires fourteen. No scheduler can reduce that chain by assigning more workers. It must shorten a task or alter the dependency structure.
+
+For the second exercise, “forbidden” and “not authorized” are different states. Deletion and upload are explicit denials. Reading Folder B lacks a grant even if no rule names it. The execution gate therefore evaluates positive authority and denials separately.
+
+For the third exercise, the product calculation assumes every subtask must succeed, every success event is independent, and the integration step is perfect. A shared misinterpretation makes errors correlated. An omitted cross-task constraint creates failure even when every local task returns its expected output. The numerical value is therefore a sensitivity calculation rather than a calibrated forecast.
+
+For the fourth exercise, the repair scope follows dependency and authority changes. A price change invalidates numerical comparisons that consume the price. A missing specification prevents a compatibility predicate from being evaluated and creates a new information-gathering need. An authorization change changes the feasible action set. Every affected task must stop before the manager evaluates cost or convenience.
+
 ### Further reading
 
 - [Least-to-Most Prompting](https://arxiv.org/abs/2205.10625): sequential easy-to-hard decomposition.
@@ -222,4 +329,8 @@ Treat the plan as executable state under version control. Record its origin, cur
 - [SayCan](https://arxiv.org/abs/2204.01691): language relevance combined with embodied feasibility.
 - [Code as Policies](https://arxiv.org/abs/2209.07753): executable programs as policy representations.
 - [Multi-Agent Computer Use](https://arxiv.org/abs/2606.01533): graph-based planning, workers, and replanning.
+
+- [TravelPlanner](https://arxiv.org/abs/2402.01622): global-constraint failures in realistic itinerary planning.
+- [PlanBench](https://arxiv.org/abs/2206.10498): formal planning tasks and executable plan validation.
+- [Vending-Bench](https://arxiv.org/abs/2502.15840): long-horizon coherence and persistent state errors.
 - [Building Effective Agents](https://www.anthropic.com/engineering/building-effective-agents): production patterns for workflows, delegation, and evaluation.

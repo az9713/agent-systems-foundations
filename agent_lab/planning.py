@@ -1,6 +1,8 @@
 """Dependency plans and work/span bounds for Chapter 5."""
 
 from dataclasses import dataclass
+from math import prod
+from typing import Sequence
 
 
 @dataclass(frozen=True)
@@ -65,3 +67,25 @@ def work_span_bound(
     work = sum(node.duration for node in nodes)
     span = max(finish.values(), default=0.0)
     return work, span, max(work / workers, span)
+
+
+def plan_success_probability(probabilities: Sequence[float]) -> float:
+    """Return the independent indispensable-task diagnostic product."""
+    if any(not 0.0 <= probability <= 1.0 for probability in probabilities):
+        raise ValueError("probabilities must lie in [0, 1]")
+    return prod(probabilities)
+
+
+def should_replan(
+    current_value: float,
+    candidate_value: float,
+    replan_cost: float,
+    *,
+    current_plan_valid: bool,
+) -> bool:
+    """Apply the chapter's hard-invalidity and value-improvement rule."""
+    if replan_cost < 0:
+        raise ValueError("replan cost must be nonnegative")
+    return (not current_plan_valid) or (
+        candidate_value - current_value > replan_cost
+    )

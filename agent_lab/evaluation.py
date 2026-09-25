@@ -5,6 +5,17 @@ from math import comb
 from typing import Mapping
 
 
+def normalized_to_pixels(
+    u: float, v: float, width: int, height: int
+) -> tuple[float, float]:
+    """Map normalized GUI coordinates to the declared pixel frame."""
+    if not 0.0 <= u <= 1.0 or not 0.0 <= v <= 1.0:
+        raise ValueError("normalized coordinates must lie in [0, 1]")
+    if width < 1 or height < 1:
+        raise ValueError("image dimensions must be positive")
+    return u * (width - 1), v * (height - 1)
+
+
 def pass_at_k(sample_count: int, correct_count: int, k: int) -> float:
     """Estimate the chance that at least one of k samples is correct."""
     if not 0 <= correct_count <= sample_count:

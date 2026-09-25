@@ -67,3 +67,51 @@ def centered_group_advantages(rewards: Sequence[float]) -> tuple[float, ...]:
         raise ValueError("at least one reward is required")
     mean = sum(rewards) / len(rewards)
     return tuple(reward - mean for reward in rewards)
+
+
+def effective_token_shares(
+    sample_probabilities: Sequence[float],
+    selected_tokens: Sequence[float],
+    mean_weights: Sequence[float],
+) -> tuple[float, ...]:
+    """Return normalized expected weighted-token contributions."""
+    if not (
+        len(sample_probabilities) == len(selected_tokens) == len(mean_weights)
+    ) or not sample_probabilities:
+        raise ValueError("three equally sized nonempty sequences are required")
+    if any(value < 0 for values in (
+        sample_probabilities, selected_tokens, mean_weights
+    ) for value in values):
+        raise ValueError("mixture inputs must be nonnegative")
+    masses = [s * tokens * weight for s, tokens, weight in zip(
+        sample_probabilities, selected_tokens, mean_weights
+    )]
+    total = sum(masses)
+    if total == 0:
+        raise ValueError("weighted-token mass must be positive")
+    return tuple(mass / total for mass in masses)
+
+
+def reward_to_go(
+    rewards: Sequence[float], gamma: float
+) -> tuple[float, ...]:
+    """Return discounted reward-to-go for every trajectory position."""
+    if not 0.0 <= gamma <= 1.0:
+        raise ValueError("gamma must lie in [0, 1]")
+    result = [0.0] * len(rewards)
+    running = 0.0
+    for index in range(len(rewards) - 1, -1, -1):
+        running = rewards[index] + gamma * running
+        result[index] = running
+    return tuple(result)
+
+
+def degenerate_binary_group_probability(
+    success_probability: float, group_size: int
+) -> float:
+    """Return P(all success or all failure) for an independent group."""
+    if not 0.0 <= success_probability <= 1.0:
+        raise ValueError("success probability must lie in [0, 1]")
+    if group_size < 1:
+        raise ValueError("group size must be positive")
+    return success_probability**group_size + (1-success_probability)**group_size

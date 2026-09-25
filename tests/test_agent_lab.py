@@ -13,7 +13,12 @@ from agent_lab.context import (
     select_items,
     submitted_input_tokens,
 )
-from agent_lab.evaluation import OutcomeVector, pass_at_k, rubric_score
+from agent_lab.evaluation import (
+    OutcomeVector,
+    normalized_to_pixels,
+    pass_at_k,
+    rubric_score,
+)
 from agent_lab.harness import RunState
 from agent_lab.memory import MemoryItem, MemoryStore
 from agent_lab.order_demo import (
@@ -21,12 +26,22 @@ from agent_lab.order_demo import (
     ScriptedOrderModel,
     build_harness,
 )
-from agent_lab.planning import TaskNode, ready_tasks, topological_order, work_span_bound
+from agent_lab.planning import (
+    TaskNode,
+    plan_success_probability,
+    ready_tasks,
+    should_replan,
+    topological_order,
+    work_span_bound,
+)
 from agent_lab.tools import CallRejected
 from agent_lab.training import (
     centered_group_advantages,
+    degenerate_binary_group_probability,
+    effective_token_shares,
     masked_cross_entropy,
     reinforce_estimate,
+    reward_to_go,
 )
 from agent_lab.types import Authority, FinalAnswer, Observation, ToolCall
 
@@ -292,6 +307,15 @@ class PlanningEvaluationTrainingTests(unittest.TestCase):
                 TaskNode("b", 1, frozenset({"a"})),
             ))
 
+    def test_plan_reliability_and_replan_rules(self) -> None:
+        self.assertAlmostEqual(
+            plan_success_probability([0.97] * 10), 0.97**10
+        )
+        self.assertFalse(should_replan(0.8, 0.85, 0.1,
+                                       current_plan_valid=True))
+        self.assertTrue(should_replan(0.8, 0.81, 0.1,
+                                      current_plan_valid=False))
+
     def test_outcome_metrics_keep_distinct_questions_distinct(self) -> None:
         self.assertAlmostEqual(pass_at_k(10, 2, 3), 8 / 15)
         outcome = OutcomeVector(True, True, 0, 0.12, 4.5)
@@ -300,6 +324,10 @@ class PlanningEvaluationTrainingTests(unittest.TestCase):
             rubric_score({"saved": 2, "verified": 1},
                          {"saved": True, "verified": False}),
             2 / 3,
+        )
+        self.assertEqual(
+            normalized_to_pixels(0.25, 0.75, 1440, 900),
+            (359.75, 674.25),
         )
 
     def test_training_equations_match_worked_examples(self) -> None:
@@ -314,6 +342,15 @@ class PlanningEvaluationTrainingTests(unittest.TestCase):
         self.assertEqual(
             centered_group_advantages([1, 0, 2]),
             (0, -1, 1),
+        )
+        self.assertEqual(reward_to_go([0.2, 1.0], 0.9), (1.1, 1.0))
+        self.assertEqual(
+            effective_token_shares([0.5, 0.5], [4000, 800], [1, 1]),
+            (5/6, 1/6),
+        )
+        self.assertAlmostEqual(
+            degenerate_binary_group_probability(0.01, 8),
+            0.01**8 + 0.99**8,
         )
 
 

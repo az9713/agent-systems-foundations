@@ -18,6 +18,8 @@ def main():
     assert len(index.select(".card")) == 9
     assert index.find("a", href="development-journey.html") is not None
     assert index.find("a", href="textbook-style-report.html") is not None
+    assert "66 main sections" in index.get_text(" ")
+    assert "Sixty-four link" in index.get_text(" ")
     journey = BeautifulSoup((ROOT / "development-journey.html").read_text(encoding="utf-8"), "html.parser")
     assert journey.h1 is not None and len(journey.find_all("h2")) >= 8
     for record in manifest:
@@ -47,6 +49,19 @@ def main():
         assert all(line.startswith("## ") for line in timestamp_lines)
         assert all(f"watch?v={video_id}" in line for line in timestamp_lines)
         assert "Watch by topic" not in md and "**Extension" not in md
+        if number >= 5:
+            assert len(md.split()) >= 4500
+            assert len(re.findall(r"^```python", md, re.MULTILINE)) >= 2
+            research_links = {
+                link for link in re.findall(r"\]\((https?://[^)]+)\)", md)
+                if "youtube.com/watch" not in link
+            }
+            assert len(research_links) >= 14
+            solutions = md.split("### Solutions and discussion", 1)[1].split(
+                "### Further reading", 1
+            )[0]
+            assert len(solutions.split()) >= 250
+            assert len(timestamp_lines) == len(re.findall(r"^## ", md, re.MULTILINE))
         assert record["caption_generated"] is True
         durations = [4073, 3442, 4539, 4523, 4514, 4729, 4466, 3899, 4666]
         assert record["last_caption_end_seconds"] > 0.98 * durations[number - 1]
@@ -75,6 +90,32 @@ def main():
         assert "MATHPLACEHOLDER" not in text
         assert len(re.findall(r"\$\$", md)) % 2 == 0
         print(f"{prefix}: {len(md.split())} words, {len(soup.find_all('h2'))} sections, captions {record['segments']} segments")
+    required_definitions = {
+        5: ("graphics processing unit (GPU)",
+            "application programming interface (API)",
+            "Stanford Research Institute Problem Solver (STRIPS)"),
+        6: ("Fill-in-the-middle (FIM)",
+            "application programming interface (API)",
+            "document object model (DOM)"),
+        7: ("computer-use agent (CUA)",
+            "graphical user interface (GUI)",
+            "Hypertext markup language (HTML)"),
+        8: ("Supervised fine-tuning (SFT)",
+            "Reinforcement learning (RL)",
+            "Dataset Aggregation"),
+        9: ("Reinforcement learning (RL)",
+            "Supervised fine-tuning (SFT)",
+            "Group Relative Policy Optimization (GRPO)",
+            "Proximal Policy Optimization"),
+    }
+    for number, definitions in required_definitions.items():
+        md = next(ROOT.glob(f"lecture-{number:02d}-*.md")).read_text(
+            encoding="utf-8"
+        )
+        assert all(definition in md for definition in definitions), (
+            number,
+            [definition for definition in definitions if definition not in md],
+        )
     print("package: PASS")
 
 
