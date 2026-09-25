@@ -60,13 +60,17 @@ def page(title, body, sidebar=""):
     )
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(title)} | Agent Systems Foundations</title>
+<title>{html.escape(title)} | Independent CMU 11-768 study | Agent Systems Foundations</title>
+<meta name="description" content="Independent, research-extended study material based on CMU 11-768: AI Agents.">
+<meta property="og:site_name" content="Agent Systems Foundations">
+<meta property="og:title" content="{html.escape(title)} | Independent CMU 11-768 study">
+<meta property="og:description" content="Independent, research-extended study material based on CMU 11-768: AI Agents.">
 <style>{STYLE}</style>
 <script>window.MathJax={{tex:{{inlineMath:[['$','$']],displayMath:[['$$','$$']]}},options:{{skipHtmlTags:['script','noscript','style','textarea','pre','code']}}}};</script>
 <script defer src="assets/mathjax-tex-svg.js"></script></head>
-<body><header class="top"><div class="shell"><a class="brand" href="index.html">Agent Systems Foundations</a><nav>{nav}<a href="development-journey.html">Development journey</a><a href="textbook-style-report.html">Style study</a></nav></div></header>
+<body><header class="top"><div class="shell"><a class="brand" href="index.html">Agent Systems Foundations · CMU 11-768 study</a><nav>{nav}<a href="development-journey.html">Development journey</a><a href="textbook-style-report.html">Style study</a></nav></div></header>
 <div class="shell layout"><main class="main">{body}</main><aside class="side"><strong>On this page</strong>{sidebar}</aside></div>
-<footer class="foot shell">Independent study material · <a href="index.html#sources">Course attribution and scope</a></footer></body></html>"""
+<footer class="foot shell">Independent study companion to <a href="https://www.cmu-agents.com/">CMU 11-768: AI Agents</a> · <a href="index.html#sources">Attribution and scope</a> · Not an official CMU resource</footer></body></html>"""
 
 
 def sidebar_for(body):
@@ -100,20 +104,20 @@ def main():
             page(short, pager + body + pager, sidebar_for(body)), encoding="utf-8"
         )
     cards = "".join(
-        f'<a class="card" href="{slug}.html"><div class="eyebrow">Chapter {i}</div>'
+        f'<a class="card" href="{slug}.html"><div class="eyebrow">CMU 11-768 study · Chapter {i}</div>'
         f'<b>{html.escape(short)}</b><span>{html.escape(description)}</span></a>'
         for i, (slug, short, description) in enumerate(NOTES, 1)
     )
-    index_body = f"""<div class="eyebrow">Independent study · Nine research-extended chapters</div>
+    index_body = f"""<div class="eyebrow">Independent companion to CMU 11-768: AI Agents</div>
 <h1>AI agents, from action loops to policy optimization</h1>
-<p>These independent chapters develop agent architecture, tool use, long-context computation, memory, planning, software and computer interaction, supervised fine-tuning, and reinforcement learning. They are written for advanced graduate readers who have used agents but have not built them. A common mathematical model connects model proposals to authorization, execution, evaluation, training, and verification. Worked examples, executable definitions, limitations, exercises, and primary sources extend the recorded lectures.</p>
+<p>These independent CMU 11-768 study chapters develop agent architecture, tool use, long-context computation, memory, planning, software and computer interaction, supervised fine-tuning, and reinforcement learning. They are written for advanced graduate readers who have used agents but have not built them. A common mathematical model connects model proposals to authorization, execution, evaluation, training, and verification. Worked examples, executable definitions, limitations, exercises, and primary sources extend the recorded CMU 11-768 lectures.</p>
 <div class="hero"><b>Reading sequence</b><p>Chapters 1–4 construct a single-run harness. Chapters 5–7 study how it plans and acts in complex environments. Chapters 8–9 explain how trajectory data changes the underlying policy. A timestamp beside a section title opens the corresponding source segment. Research findings and primary-source citations are integrated into the exposition.</p></div>
 <div class="cards">{cards}</div>
 <h2 id="lab">Cumulative Python harness</h2>
 <p>Each chapter develops part of one executable Python package. Chapters 1–4 define the run state, permission-checked tools, context management, and memory. Chapter 5 adds dependency plans, reliability diagnostics, replanning decisions, and work/span bounds. Chapters 6–7 add behavioral evaluation measures and coordinate transforms. Chapters 8–9 add masked supervised loss, effective data mixtures, reward-to-go, a Monte Carlo policy-gradient estimator, and group diagnostics. The package uses only the Python standard library and deterministic examples, so readers can reproduce every behavior without credentials.</p>
 <p>Read the <a href="agent-lab.html">companion code guide</a> and run <code>python -m unittest discover -s tests -v</code> from the repository root. The <a href="https://github.com/az9713/agent-systems-foundations/blob/main/tests/test_agent_lab.py">behavioral checks</a> cover execution boundaries as well as the planning, evaluation, and training equations. The package is an educational harness. It is not a production runtime or a provider-specific integration.</p>
 <h2 id="sources">Role of CMU 11-768</h2>
-<p>These chapters use the <em>contents</em> of the first nine available recordings of <a href="https://www.cmu-agents.com/">CMU 11-768: AI Agents</a>, not merely the syllabus. The recordings determine the chapter sequence and supply substantive starting material, examples, distinctions, and empirical questions. The chapters reconstruct that material as independent textbook exposition, then develop it through explicit definitions, derivations, code, worked cases, exercises, and primary research.</p>
+<p>These chapters use the <em>contents</em> of the first nine available recordings of <a href="https://www.cmu-agents.com/">CMU 11-768: AI Agents</a>, not merely the syllabus. The CMU 11-768 recordings determine the chapter sequence and supply substantive starting material, examples, distinctions, and empirical questions. The chapters reconstruct that material as independent textbook exposition, then develop it through explicit definitions, derivations, code, worked cases, exercises, and primary research.</p>
 <table><thead><tr><th>Chapter</th><th>Traceable lecture material</th><th>Further development in this edition</th></tr></thead><tbody>
 <tr><td><a href="lecture-01-agents.html">1 · Agents</a></td><td>The <a href="https://www.youtube.com/watch?v=UwfjzyLnvMg&amp;t=1475s">interaction loop</a> and <a href="https://www.youtube.com/watch?v=UwfjzyLnvMg&amp;t=2140s">training-versus-harness question</a>.</td><td>A formal run state, an action-admission predicate, an authorization invariant, and a worked order-cancellation case.</td></tr>
 <tr><td><a href="lecture-02-tool-use.html">2 · Tools</a></td><td>The <a href="https://www.youtube.com/watch?v=jXChFB4JSyw&amp;t=596s">grocery-cart example</a>, <a href="https://www.youtube.com/watch?v=jXChFB4JSyw&amp;t=635s">code as a meta-tool</a>, and <a href="https://www.youtube.com/watch?v=jXChFB4JSyw&amp;t=1620s">constrained tool-call generation</a>.</td><td>Typed tool effects, explicit preconditions and postconditions, retry analysis, and a permission-checked implementation.</td></tr>

@@ -1,6 +1,6 @@
 # Lecture 6 — Agents for coding and software development
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Graham Neubig, 10 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Graham Neubig, 10 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Code generation is only one part of software repair [00:00](https://www.youtube.com/watch?v=1BWeH1oOM7k&t=0s)
 

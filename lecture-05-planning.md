@@ -1,6 +1,6 @@
 # Lecture 5 — Planning, task decomposition, and multi-agent coordination
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Daniel Fried, 8 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Daniel Fried, 8 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Plans must survive contact with the environment [00:00](https://www.youtube.com/watch?v=S8v-dR4s29M&t=0s)
 

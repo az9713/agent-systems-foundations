@@ -1,6 +1,6 @@
 # Lecture 3 — Long context modeling for agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Graham Neubig, 1 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Graham Neubig, 1 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. The growth of agent context [01:00](https://www.youtube.com/watch?v=AiwCCvFW1uE&t=60s)
 

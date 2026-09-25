@@ -1,6 +1,6 @@
 # Lecture 9 — Reinforcement-learning foundations for agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Daniel Fried, 22 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Daniel Fried, 22 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Demonstration likelihood and task reward are different objectives [00:00](https://www.youtube.com/watch?v=paAcPaaYZGM&t=0s)
 

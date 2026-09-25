@@ -1,6 +1,6 @@
 # Lecture 1 — What are agents, and how do they work?
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Daniel Fried and Graham Neubig, 25 August 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Daniel Fried and Graham Neubig, 25 August 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Autonomy and consequence [03:55](https://www.youtube.com/watch?v=UwfjzyLnvMg&t=235s)
 

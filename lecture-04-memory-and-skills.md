@@ -1,6 +1,6 @@
 # Lecture 4 — Memory and skills for agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Daniel Fried, 3 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Daniel Fried, 3 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. The cross-task learning problem [01:00](https://www.youtube.com/watch?v=6zigF2a-2Pw&t=60s)
 

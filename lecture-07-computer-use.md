@@ -1,6 +1,6 @@
 # Lecture 7 — Computer-use agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by JY Koh, 15 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by JY Koh, 15 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Acting through the human interface [01:30](https://www.youtube.com/watch?v=jwGluLrrqjQ&t=90s)
 

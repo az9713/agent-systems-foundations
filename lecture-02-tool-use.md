@@ -1,6 +1,6 @@
 # Lecture 2 — Tool use for language-model agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Graham Neubig, 27 August 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Graham Neubig, 27 August 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. Tools extend the action space [00:30](https://www.youtube.com/watch?v=jXChFB4JSyw&t=30s)
 

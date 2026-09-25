@@ -1,6 +1,6 @@
 # Lecture 8 — Supervised fine-tuning for agents
 
-*Independent study chapter · Based on a CMU 11-768 lecture by Yueqi Song, 17 September 2026 · [Course and attribution](index.html#sources)*
+*Independent study chapter · Based on a CMU 11-768: AI Agents lecture by Yueqi Song, 17 September 2026 · [Course and attribution](index.html#sources)*
 
 ## 0. A trajectory becomes a training sequence [00:00](https://www.youtube.com/watch?v=O3HSU0AoILc&t=0s)
 
