@@ -66,5 +66,90 @@
     "segments": 1823,
     "last_caption_end_seconds": 4522.88,
     "retrieved_utc": "2026-09-12T14:52:25.343470+00:00"
+  },
+  {
+    "lecture": 5,
+    "title": "Planning, Task Decomposition, and Multi-Agent Coordination",
+    "video_id": "S8v-dR4s29M",
+    "url": "https://www.youtube.com/watch?v=S8v-dR4s29M",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1754,
+    "last_caption_end_seconds": 4514.56,
+    "retrieved_utc": "2026-09-25T14:20:51.692984+00:00"
+  },
+  {
+    "lecture": 6,
+    "title": "Agents for Coding and Software Development",
+    "video_id": "1BWeH1oOM7k",
+    "url": "https://www.youtube.com/watch?v=1BWeH1oOM7k",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1755,
+    "last_caption_end_seconds": 4729.84,
+    "retrieved_utc": "2026-09-25T14:20:52.913955+00:00"
+  },
+  {
+    "lecture": 7,
+    "title": "Computer Use Agents",
+    "video_id": "jwGluLrrqjQ",
+    "url": "https://www.youtube.com/watch?v=jwGluLrrqjQ",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1995,
+    "last_caption_end_seconds": 4467.04,
+    "retrieved_utc": "2026-09-25T14:20:54.166333+00:00"
+  },
+  {
+    "lecture": 8,
+    "title": "Supervised Fine Tuning",
+    "video_id": "O3HSU0AoILc",
+    "url": "https://www.youtube.com/watch?v=O3HSU0AoILc",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1341,
+    "last_caption_end_seconds": 3899.92,
+    "retrieved_utc": "2026-09-25T14:20:55.332054+00:00"
+  },
+  {
+    "lecture": 9,
+    "title": "Reinforcement Learning Basics",
+    "video_id": "paAcPaaYZGM",
+    "url": "https://www.youtube.com/watch?v=paAcPaaYZGM",
+    "caption_language": "en",
+    "caption_generated": true,
+    "available_tracks": [
+      {
+        "language_code": "en",
+        "is_generated": true
+      }
+    ],
+    "segments": 1809,
+    "last_caption_end_seconds": 4666.16,
+    "retrieved_utc": "2026-09-25T14:20:56.503760+00:00"
   }
 ]

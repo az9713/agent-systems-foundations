@@ -1,4 +1,4 @@
-"""Focused provenance and package checks for the four-lecture note set."""
+"""Focused provenance and package checks for the nine-lecture note set."""
 
 import json
 import re
@@ -13,9 +13,9 @@ ROOT = Path(__file__).resolve().parent
 
 def main():
     manifest = json.loads((ROOT / "sources/manifest.json").read_text(encoding="utf-8"))
-    assert len(manifest) == 4
+    assert len(manifest) == 9
     index = BeautifulSoup((ROOT / "index.html").read_text(encoding="utf-8"), "html.parser")
-    assert len(index.select(".card")) == 4
+    assert len(index.select(".card")) == 9
     assert index.find("a", href="development-journey.html") is not None
     assert index.find("a", href="textbook-style-report.html") is not None
     journey = BeautifulSoup((ROOT / "development-journey.html").read_text(encoding="utf-8"), "html.parser")
@@ -48,7 +48,8 @@ def main():
         assert all(f"watch?v={video_id}" in line for line in timestamp_lines)
         assert "Watch by topic" not in md and "**Extension" not in md
         assert record["caption_generated"] is True
-        assert record["last_caption_end_seconds"] > 0.98 * [4073, 3442, 4539, 4523][number - 1]
+        durations = [4073, 3442, 4539, 4523, 4514, 4729, 4466, 3899, 4666]
+        assert record["last_caption_end_seconds"] > 0.98 * durations[number - 1]
         for link in soup.find_all("a", href=True):
             href = link["href"]
             if href.startswith("#"):

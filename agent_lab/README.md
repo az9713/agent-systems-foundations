@@ -1,6 +1,6 @@
 # Companion Python harness
 
-This standard-library package accompanies the four current study chapters. It
+This standard-library package accompanies the nine current study chapters. It
 runs without a model account or network connection. The proposal source in
 `order_demo.py` is deterministic so the mechanics can be tested separately from
 model variability.
@@ -11,6 +11,9 @@ model variability.
 | 2, tools | `tools.py`, `order_demo.py` | Effect set, schema, precondition, atomic conditional update, uncertain outcome |
 | 3, context | `context.py` | Token-volume equations, KV-cache size, knapsack, compact state |
 | 4, memory | `memory.py` | Scope and validity predicates, budgeted retrieval, file-backed persistence |
+| 5, planning | `planning.py` | Dependency graph, ready set, total work, and critical-path span |
+| 6–7, evaluation | `evaluation.py` | pass@k, multidimensional outcomes, and weighted rubrics |
+| 8–9, training | `training.py` | Masked cross-entropy, REINFORCE estimates, and group-centered advantages |
 
 From the repository root, run:
 
@@ -31,7 +34,7 @@ conditional cancellation and idempotency within one process; they do not
 survive a restart. The event record and memory store are not an audit-grade
 checkpoint system. The context builder uses whitespace-separated units as a
 teaching proxy, not a provider tokenizer. There is no network sandbox,
-concurrent dependency scheduler, payment tool, or model-initiated memory write.
+concurrent dependency scheduler, optimizer, payment tool, or model-initiated memory write.
 Those features require service-specific interfaces, permissions, and tests.
 Before connecting a remote tool, its adapter must classify uncertain outcomes
 and avoid putting secrets from arguments or exception messages into traces.

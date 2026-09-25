@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reinforcement learning | Agent Systems Foundations</title>
+<style>
+:root {color-scheme:dark;--bg:#0c1018;--panel:#151d2a;--line:#2c3b4f;--text:#e8edf4;--muted:#aab9cc;--accent:#86c5ff;--warm:#ffd395}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:17px/1.68 system-ui,Segoe UI,sans-serif}
+a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max-width:1180px;margin:auto;padding:0 24px}.top{border-bottom:1px solid var(--line);background:#101722;position:sticky;top:0;z-index:2}.top .shell{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:12px;padding-bottom:12px}.brand{font-weight:800;color:var(--text);text-decoration:none}.top nav{display:flex;gap:14px;flex-wrap:wrap;font-size:.87rem}.top nav a{text-decoration:none}.layout{display:grid;grid-template-columns:minmax(0,780px) 260px;gap:44px;align-items:start}.main{min-width:0;padding:46px 0 100px}.side{position:sticky;top:76px;max-height:calc(100vh - 90px);overflow:auto;padding:35px 0 20px;font-size:.83rem}.side strong{display:block;color:var(--warm);letter-spacing:.08em;text-transform:uppercase}.side ul{list-style:none;padding:0}.side li{margin:9px 0}.side a{text-decoration:none;color:var(--muted)}.side a:hover{color:var(--accent)}h1,h2,h3{line-height:1.2;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,4vw,3.7rem);margin:0 0 22px}h2{font-size:1.7rem;margin:68px 0 18px;border-top:1px solid var(--line);padding-top:25px;scroll-margin-top:80px}h2 a[href*="youtube.com/watch"]{font-size:.58em;font-weight:650;letter-spacing:0;white-space:nowrap;vertical-align:middle}h3{font-size:1.2rem;color:var(--warm);margin:38px 0 12px;scroll-margin-top:80px}p{margin:0 0 1.15em}p:first-of-type{color:var(--muted)}strong{color:#fff}blockquote{border-left:3px solid var(--accent);padding:10px 18px;background:var(--panel);margin:24px 0}table{border-collapse:collapse;width:100%;margin:24px 0 34px;display:block;overflow-x:auto;font-size:.94rem}th,td{border:1px solid var(--line);padding:12px 13px;text-align:left;vertical-align:top}th{background:#192536;color:var(--warm)}tr:nth-child(even) td{background:#121b27}pre{background:#111a27;border:1px solid var(--line);border-radius:10px;padding:20px;overflow-x:auto;color:#d4e8ff;font:14px/1.5 Consolas,monospace}code{font-family:Consolas,monospace;background:#1b293a;padding:1px 4px;border-radius:3px}pre code{background:none;padding:0}ol,ul{padding-left:1.6em}li{margin-bottom:.55em}.MathJax_Display{overflow-x:auto}.hero{background:linear-gradient(135deg,#16243a,#111925);border:1px solid var(--line);border-radius:16px;padding:25px 30px;margin:36px 0}.eyebrow{font-size:.78rem;font-weight:800;color:var(--warm);letter-spacing:.12em;text-transform:uppercase}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:28px}.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px;text-decoration:none;color:var(--text)}.card:hover{border-color:var(--accent);transform:translateY(-2px)}.card b{font-size:1.15rem}.card span{display:block;color:var(--muted);margin-top:8px}.tiny{color:var(--muted);font-size:.85rem}.foot{border-top:1px solid var(--line);padding:24px 0 50px;color:var(--muted);font-size:.85rem}@media(max-width:900px){.layout{display:block}.side{display:none}.main{padding-top:32px}.cards{grid-template-columns:1fr}.top nav{display:none}}@media print{:root{color-scheme:light;--bg:#fff;--panel:#f5f5f5;--line:#ccc;--text:#111;--muted:#333;--accent:#064d8b;--warm:#704600}body{font-size:11pt}.top,.side{display:none}.shell{max-width:none;padding:0}.main{padding:0}h2{break-after:avoid}pre,table{break-inside:avoid}.card{break-inside:avoid}}
+.chapter-nav{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;border-block:1px solid var(--line);padding:18px 0;margin:0 0 42px;font-size:.93rem}.chapter-nav:last-child{margin:55px 0 0}.chapter-nav a{display:block;text-decoration:none}.chapter-nav .next{text-align:right}.chapter-nav .index{color:var(--muted)}@media(max-width:600px){.chapter-nav{grid-template-columns:1fr;gap:8px}.chapter-nav .next{text-align:left}}@media print{.chapter-nav{display:none}}
+</style>
+<script>window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']}};</script>
+<script defer src="assets/mathjax-tex-svg.js"></script></head>
+<body><header class="top"><div class="shell"><a class="brand" href="index.html">Agent Systems Foundations</a><nav><a href="lecture-01-agents.html">What are agents?</a><a href="lecture-02-tool-use.html">Tool use</a><a href="lecture-03-long-context.html">Long context</a><a href="lecture-04-memory-and-skills.html">Memory and skills</a><a href="lecture-05-planning.html">Planning and coordination</a><a href="lecture-06-coding-agents.html">Coding agents</a><a href="lecture-07-computer-use.html">Computer use</a><a href="lecture-08-supervised-fine-tuning.html">Supervised fine-tuning</a><a href="lecture-09-reinforcement-learning.html">Reinforcement learning</a><a href="development-journey.html">Development journey</a><a href="textbook-style-report.html">Style study</a></nav></div></header>
+<div class="shell layout"><main class="main"><nav class="chapter-nav" aria-label="Chapter navigation"><a class="previous" href="lecture-08-supervised-fine-tuning.html">← Previous: Supervised fine-tuning</a><a class="index" href="index.html">Reading guide</a><span></span></nav><h1 id="lecture-9-reinforcement-learning-foundations-for-agents">Lecture 9 — Reinforcement-learning foundations for agents</h1>
+<p><em>Independent study chapter · Based on a CMU 11-768 lecture by Daniel Fried, 22 September 2026 · <a href="index.html#sources">Course and attribution</a></em></p>
+<h2 id="0-demonstration-likelihood-and-task-reward-are-different-objectives-0000">0. Demonstration likelihood and task reward are different objectives <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=0s">00:00</a></h2>
+<p>Consider a number-search agent. A hidden integer lies between 1 and 16. The agent may guess a number and observe “higher,” “lower,” or “correct.” It receives reward one if it finds the number within four guesses and zero otherwise. A supervised demonstration can teach one successful sequence. Reinforcement learning uses sampled outcomes to increase expected success, including outcomes generated by the current policy.</p>
+<p><strong>Reinforcement learning (RL)</strong> adjusts a policy using rewards obtained from interaction. A <strong>policy</strong> $\pi_\theta(a\mid h)$ is a probability distribution over action $a$ given history $h$, parameterized by model weights $\theta$. A <strong>reward</strong> is a scalar signal defined by the task. High reward means preferred behavior only to the extent that the reward correctly represents the task.</p>
+<p>Supervised fine-tuning (SFT) minimizes negative log probability of demonstrated actions. For demonstration $\tau^*=(a_0^*,\ldots,a_{T-1}^*)$ with histories $h_t^*$, its action loss is</p>
+<p>$$\mathcal L_{\rm SFT}(\theta)
+=-\sum_{t=0}^{T-1}\log\pi_\theta(a_t^*\mid h_t^*).$$</p>
+<p>This objective increases likelihood of the recorded actions. It does not directly distinguish an optimal demonstration from a barely successful one, use failed attempts, or expose the model to all histories created by its own errors.</p>
+<p>RL instead defines expected return. The rest of the chapter derives a gradient for that objective and explains its limitations for agent trajectories.</p>
+<h2 id="1-trajectories-couple-a-policy-to-an-environment-0300">1. Trajectories couple a policy to an environment <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=180s">03:00</a></h2>
+<p>Let $s_t\in\mathcal S$ be hidden environment state, $o_t\in\mathcal O$ an observation, and $a_t\in\mathcal A$ an action. Let $r_t\in\mathbb R$ be the scalar reward after step $t$, where $\mathbb R$ is the set of real numbers. A finite trajectory is</p>
+<p>$$\tau=(o_0,a_0,r_0,o_1,a_1,r_1,\ldots,o_T).$$</p>
+<p>The history before action $a_t$ is $h_t=(o_0,a_0,\ldots,o_t)$. The agent conditions on history rather than hidden state. Let initial observation distribution be $\mu(o_0\mid x)$ for task instance $x$. Let environment transition-observation probability be $P_{\rm env}(o_{t+1},r_t\mid h_t,a_t)$. The trajectory probability is</p>
+<p>$$p_\theta(\tau\mid x)=\mu(o_0\mid x)
+\prod_{t=0}^{T-1}
+\pi_\theta(a_t\mid h_t)
+P_{\rm env}(o_{t+1},r_t\mid h_t,a_t).$$</p>
+<p>Only the policy factors depend on $\theta$ when the environment is fixed with respect to the model parameters. The environment can be stochastic and non-differentiable.</p>
+<p>For discount factor $\gamma\in[0,1]$, define trajectory return</p>
+<p>$$R(\tau)=\sum_{t=0}^{T-1}\gamma^tr_t.$$</p>
+<p>In the number-search task, reward arrives only at termination and $\gamma=1$, so return is one for success and zero for failure. In a long agent task, intermediate rewards can express partial progress. Poorly designed intermediate rewards can also be exploited.</p>
+<p>The expected-return objective for task distribution $D$ is</p>
+<p>$$J(\theta)=\mathbb E_{x\sim D}
+\mathbb E_{\tau\sim p_\theta(\cdot\mid x)}[R(\tau)].$$</p>
+<p>The outer expectation averages tasks. The inner expectation averages trajectories generated by the policy and environment. Maximizing $J$ changes the probability of sampled behavior rather than copying a fixed demonstration set.</p>
+<h2 id="2-why-sft-filtered-self-training-and-rl-differ-1000">2. Why SFT, filtered self-training, and RL differ <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=600s">10:00</a></h2>
+<p>SFT observes expert histories. At inference, the model can enter histories absent from training. This train–deployment mismatch is often called <strong>exposure bias</strong>. On-policy RL samples from the current policy, so its training histories include current mistakes. This benefit comes with higher cost and instability.</p>
+<p><strong>Reinforced self-training (ReST)</strong> generates trajectories, scores them, and trains on a selected subset using an SFT-like loss. <a href="https://arxiv.org/abs/2308.08998">ReST</a> separates data generation from offline improvement. <a href="https://arxiv.org/abs/2312.06585">ReST-EM</a> repeats generation, binary filtering, and fine-tuning.</p>
+<p>For binary reward, let $D_\theta^+=\{\tau:R(\tau)=1,\tau\sim p_\theta\}$ be successful sampled trajectories. A filtered loss is</p>
+<p>$$\mathcal L_{\rm filter}(\theta&#x27;)
+=-\mathbb E_{\tau\sim D_\theta^+}
+\sum_t\log\pi_{\theta&#x27;}(a_t\mid h_t).$$</p>
+<p>The data-generating parameters $\theta$ and updated parameters $\theta&#x27;$ are distinguished because offline training may reuse a fixed batch. This method ignores relative quality among retained trajectories and learns nothing from a batch with no successes. It can nevertheless be effective when rewards are verifiable and successful samples are frequent enough.</p>
+<h2 id="3-the-score-function-identity-gives-the-policy-gradient-3200">3. The score-function identity gives the policy gradient <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=1920s">32:00</a></h2>
+<p>For a fixed task instance, write the expected return as a sum over trajectories:</p>
+<p>$$J(\theta)=\sum_\tau p_\theta(\tau)R(\tau).$$</p>
+<p>Differentiate with respect to $\theta$:</p>
+<p>$$\nabla_\theta J(\theta)
+=\sum_\tau R(\tau)\nabla_\theta p_\theta(\tau).$$</p>
+<p>For any positive differentiable probability $p_\theta(\tau)$,</p>
+<p>$$\nabla_\theta p_\theta(\tau)
+=p_\theta(\tau)\nabla_\theta\log p_\theta(\tau).$$</p>
+<p>Substitution converts the sum into an expectation:</p>
+<p>$$\nabla_\theta J(\theta)
+=\mathbb E_{\tau\sim p_\theta}
+\left[R(\tau)\nabla_\theta\log p_\theta(\tau)\right].$$</p>
+<p>This is the <strong>score-function identity</strong>. The vector $\nabla_\theta\log p_\theta(\tau)$ is the score of trajectory $\tau$.</p>
+<p>The environment factors do not depend on $\theta$, so</p>
+<p>$$\nabla_\theta\log p_\theta(\tau)
+=\sum_{t=0}^{T-1}\nabla_\theta
+\log\pi_\theta(a_t\mid h_t).$$</p>
+<p>Combining the equations yields the REINFORCE gradient:</p>
+<p>$$\nabla_\theta J(\theta)=
+\mathbb E_\tau\left[
+R(\tau)\sum_{t=0}^{T-1}
+\nabla_\theta\log\pi_\theta(a_t\mid h_t)
+\right].$$</p>
+<p>The derivation does not differentiate through sampled actions or environment transitions. It increases log probability of actions on high-return trajectories. With zero reward, the basic estimator gives no update for that trajectory; it does not automatically push failed actions down.</p>
+<p>For a language-model action consisting of several tokens, its log probability is the sum of token log probabilities. Agent policy-gradient implementations can therefore reuse token-level likelihood computation with masks and scalar coefficients.</p>
+<p>Given $N$ sampled trajectories, a Monte Carlo estimator is</p>
+<p>$$\widehat g=\frac1N\sum_{i=1}^N
+R_i\nabla_\theta\log p_\theta(\tau_i).$$</p>
+<p>It is unbiased under on-policy sampling and the assumptions above. It can have high variance.</p>
+<h2 id="4-baselines-reduce-variance-without-changing-expectation-4500">4. Baselines reduce variance without changing expectation <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=2700s">45:00</a></h2>
+<p>A <strong>baseline</strong> $b(h_t)$ estimates expected return from history $h_t$ without depending on the sampled action $a_t$. Define an <strong>advantage estimate</strong> $\widehat A_t=G_t-b(h_t)$, where $G_t$ is the return attributed to action $a_t$. The policy-gradient estimator becomes</p>
+<p>$$\widehat g_b=\frac1N\sum_{i=1}^N\sum_t
+\widehat A_{i,t}\nabla_\theta
+\log\pi_\theta(a_{i,t}\mid h_{i,t}).$$</p>
+<p>The baseline term has zero expectation conditional on history:</p>
+<p>$$\begin{aligned}
+\mathbb E_{a\sim\pi_\theta(\cdot\mid h)}
+[b(h)\nabla_\theta\log\pi_\theta(a\mid h)]
+&amp;=b(h)\sum_a\pi_\theta(a\mid h)
+\nabla_\theta\log\pi_\theta(a\mid h)\\
+&amp;=b(h)\sum_a\nabla_\theta\pi_\theta(a\mid h)\\
+&amp;=b(h)\nabla_\theta\sum_a\pi_\theta(a\mid h)\\
+&amp;=b(h)\nabla_\theta 1=0.
+\end{aligned}$$</p>
+<p>Therefore subtracting an action-independent baseline does not bias the expected gradient. It changes sample variance. A baseline that uses the sampled action can introduce bias.</p>
+<h3 id="a-two-action-numerical-example">A two-action numerical example</h3>
+<p>Let actions $A$ and $B$ have probabilities $p$ and $1-p$. Parameterize $p=\sigma(\theta)$ with logistic function $\sigma(\theta)=1/(1+e^{-\theta})$. Suppose rewards are $r(A)=1$ and $r(B)=0$. The score derivatives are</p>
+<p>$$\frac{\partial}{\partial\theta}\log p=1-p,
+\qquad
+\frac{\partial}{\partial\theta}\log(1-p)=-p.$$</p>
+<p>At $p=0.5$, the true gradient of expected reward $J=p$ is $p(1-p)=0.25$. Without a baseline, the one-sample estimator is $0.5$ when $A$ is drawn and $0$ when $B$ is drawn. Its expectation is $0.25$.</p>
+<p>With baseline $b=0.5$, the estimator is $(1-0.5)(0.5)=0.25$ for $A$ and $(0-0.5)(-0.5)=0.25$ for $B$. The estimator is exactly $0.25$ in this symmetric example, so its variance is zero. A poor baseline can increase variance; unbiasedness alone does not make it useful.</p>
+<p>The companion function averages vector-valued score gradients:</p>
+<pre><code class="language-python">from agent_lab.training import reinforce_estimate
+
+estimate = reinforce_estimate(
+    score_gradients=[(0.5,), (-0.5,)],
+    rewards=[1.0, 0.0],
+    baselines=[0.5, 0.5],
+)
+assert estimate == (0.25,)
+</code></pre>
+<h2 id="5-reward-to-go-improves-temporal-credit-assignment-5400">5. Reward-to-go improves temporal credit assignment <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=3240s">54:00</a></h2>
+<p>When rewards occur throughout a trajectory, an early action should not be weighted by rewards that occurred before it. Define <strong>reward-to-go</strong></p>
+<p>$$G_t=\sum_{k=t}^{T-1}\gamma^{k-t}r_k.$$</p>
+<p>Replacing total return $R(\tau)$ with $G_t$ in the coefficient for action $a_t$ removes past reward terms whose expectation does not depend on that action. This can reduce variance while preserving the expected policy gradient under the usual causal assumptions.</p>
+<p>Reward-to-go does not solve all <strong>credit assignment</strong>, the problem of identifying which actions caused an outcome. A final repository test reward gives the same scalar signal to file inspection, correct edits, unnecessary commands, and recovery actions. Process rewards or a learned value function can provide finer signal, but each introduces a new oracle that can be wrong or exploited.</p>
+<p>Reward shaping adds intermediate reward $F(s_t,a_t,s_{t+1})$. Arbitrary shaping can change the optimal policy. Potential-based shaping of the form $\gamma\Phi(s_{t+1})-\Phi(s_t)$ preserves optimal policies in standard Markov decision-process settings, where $\Phi$ is a state potential. Agent environments often have partial observations and approximate state, so the theorem's assumptions must be checked before applying it.</p>
+<h2 id="6-group-relative-advantages-compare-samples-for-the-same-task-6300">6. Group-relative advantages compare samples for the same task <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=3780s">63:00</a></h2>
+<p>For one task instance $x$, sample a group of $G$ trajectories with rewards $R_1,\ldots,R_G$. Their mean is $\bar R=G^{-1}\sum_jR_j$. A centered group-relative advantage is</p>
+<p>$$\widehat A_j=R_j-\bar R.$$</p>
+<p>This estimate needs no separate value model. If all group rewards are equal, every advantage is zero and the group contributes no policy-gradient signal. With sparse binary reward, all-failure groups are therefore wasted for the policy update.</p>
+<p><a href="https://arxiv.org/abs/2402.03300">Group Relative Policy Optimization (GRPO)</a> adds policy-ratio clipping and other terms beyond simple centering. <a href="https://arxiv.org/abs/2503.20783">DrGRPO</a> analyzes biases associated with group standard-deviation and response-length normalization and proposes removing them in its setting. A label such as “GRPO” is insufficient to reproduce training; report the exact loss, normalization, clipping, sampling group, and reference-policy terms.</p>
+<p>The companion implementation computes unstandardized centered advantages:</p>
+<pre><code class="language-python">from agent_lab.training import centered_group_advantages
+
+advantages = centered_group_advantages([1.0, 0.0, 0.0, 1.0])
+assert advantages == (0.5, -0.5, -0.5, 0.5)
+</code></pre>
+<p>Centering within a task controls for task difficulty. It can also discard signal when all trajectories succeed at different costs unless cost enters the reward. Group composition changes the comparison baseline.</p>
+<h2 id="7-on-policy-data-off-policy-reuse-and-stability-7230">7. On-policy data, off-policy reuse, and stability <a href="https://www.youtube.com/watch?v=paAcPaaYZGM&amp;t=4350s">72:30</a></h2>
+<p>An update is <strong>on-policy</strong> when trajectories are sampled from the policy being optimized. It is <strong>off-policy</strong> when data come from a different behavior policy $\mu$. Reusing old or teacher data improves sample efficiency but changes the gradient estimate.</p>
+<p>For trajectory sampled from $\mu$, the importance ratio is</p>
+<p>$$w(\tau)=\frac{p_\theta(\tau)}{p_\mu(\tau)}.$$</p>
+<p>Under support and integrability conditions, importance weighting can express an expectation under $p_\theta$ using samples from $p_\mu$. For long trajectories, the product of action-probability ratios can have enormous variance. Clipping ratios reduces variance but introduces bias.</p>
+<p>Agent RL also depends on environment throughput. Let rollout time per trajectory be $d_r$, update time per batch be $d_u$, and number of parallel environments be $m$. A rough cycle time for batch size $B$ is at least $Bd_r/m+d_u$, before stragglers and coordination. Faster optimization does not help if resettable environments or verifiers dominate the pipeline.</p>
+<p>Safety constraints should remain outside compensable reward where possible. A high task reward must not offset an unauthorized purchase or data disclosure. The execution gate from Chapter 1 applies during training rollouts as well as deployment.</p>
+<h3 id="value-functions-turn-delayed-return-into-local-learning-signals">Value functions turn delayed return into local learning signals</h3>
+<p>For a Markov decision process, define the <strong>state-value function</strong> under policy $\pi$ as</p>
+<p>$$V^\pi(s)=\mathbb E_\pi[G_t\mid s_t=s],$$</p>
+<p>where $G_t=\sum_{k=0}^{\infty}\gamma^k r_{t+k}$ is the discounted return from step $t$, $r_{t+k}$ is the later reward, and discount factor $\gamma\in[0,1)$ reduces the weight of distant rewards. Define the <strong>action-value function</strong></p>
+<p>$$Q^\pi(s,a)=\mathbb E_\pi[G_t\mid s_t=s,a_t=a].$$</p>
+<p>The advantage function is $A^\pi(s,a)=Q^\pi(s,a)-V^\pi(s)$. It measures whether action $a$ is better or worse than the policy's average action at state $s$. Using an estimated advantage in the policy-gradient estimator assigns credit locally while preserving the interpretation of total return.</p>
+<p>The value function satisfies the Bellman expectation equation</p>
+<p>$$V^\pi(s)=\sum_a\pi(a\mid s)
+\sum_{s&#x27;,r}p(s&#x27;,r\mid s,a)
+\left[r+\gamma V^\pi(s&#x27;)\right],$$</p>
+<p>where $p(s&#x27;,r\mid s,a)$ is the environment probability of next state $s&#x27;$ and reward $r$. This equation decomposes long-term value into immediate reward plus discounted continuation value. An <strong>actor–critic</strong> method uses an actor, the policy $\pi_\theta$, and a critic, an approximation $V_\phi$ with parameters $\phi$. The temporal-difference residual</p>
+<p>$$\delta_t=r_t+\gamma V_\phi(s_{t+1})-V_\phi(s_t)$$</p>
+<p>is a one-step estimate of advantage. It is biased when the critic is inaccurate, but it can have much lower variance than a full trajectory return.</p>
+<h3 id="reusing-old-trajectories-requires-a-likelihood-ratio">Reusing old trajectories requires a likelihood ratio</h3>
+<p>An <strong>on-policy</strong> estimator uses trajectories sampled from the policy being updated. Suppose instead that data were sampled from behavior policy $\mu$ while the target policy is $\pi_\theta$. For an action observed in state $s_t$, define the importance ratio</p>
+<p>$$r_t(\theta)=\frac{\pi_\theta(a_t\mid s_t)}{\mu(a_t\mid s_t)}.$$</p>
+<p>Multiplying by this ratio corrects an expectation when the behavior policy assigns positive probability wherever the target policy does. Large ratios create high variance and make a few samples dominate. This is why unlimited reuse of old agent trajectories is unstable even when those trajectories were once on-policy.</p>
+<p><a href="https://arxiv.org/abs/1707.06347">Proximal Policy Optimization</a> limits the incentive for a single update to move the policy too far. Its clipped surrogate objective uses</p>
+<p>$$L^{\rm clip}(\theta)=\mathbb E_t\left[
+\min\left(r_t(\theta)\hat A_t,
+\operatorname{clip}(r_t(\theta),1-\epsilon,1+\epsilon)\hat A_t\right)
+\right],$$</p>
+<p>where $\hat A_t$ is an estimated advantage, $\epsilon&gt;0$ is a clipping width, and $\operatorname{clip}(x,l,u)$ restricts $x$ to the interval $[l,u]$. Clipping does not enforce an exact trust region and does not make arbitrary offline data safe to reuse. It reduces the reward for large probability-ratio changes in the sampled batch.</p>
+<h3 id="reward-design-is-an-identification-problem">Reward design is an identification problem</h3>
+<p>A reward function is a measured proxy for desired behavior. Let $Y(\tau)$ be the true, possibly unobservable utility of trajectory $\tau$, and let $R(\tau)$ be the computable reward. Optimizing $R$ improves $Y$ only to the extent that their relationship remains valid under the distribution shift caused by optimization. A policy can exploit degrees of freedom that were rare in the data used to validate the reward.</p>
+<p>For an agent, a useful outcome vector may include task success $S$, preserved invariants $I$, forbidden effects $F$, resource cost $C$, and latency $L$. A scalar reward such as</p>
+<p>$$R=w_SS+w_II-w_FF-w_CC-w_LL$$</p>
+<p>defines a trade-off through weights $w_S,w_I,w_F,w_C,w_L$. It should not be mistaken for the measurements themselves. In particular, setting a large finite penalty $w_F$ still permits a forbidden effect when other rewards are large enough. A hard execution constraint enforces $F=0$ before the action occurs.</p>
+<p>This separation also improves diagnosis. If task success rises while cost and forbidden effects rise, a scalar leaderboard position can hide the regression. Report the vector first. Apply an explicitly justified decision rule afterward.</p>
+<h2 id="8-what-the-derivation-proves-and-what-it-does-not">8. What the derivation proves and what it does not</h2>
+<p>The score-function derivation proves an identity under a fixed environment and differentiable policy probabilities. A Monte Carlo estimator is unbiased under on-policy sampling. These facts do not guarantee useful learning at finite sample size, correct rewards, stable optimization, or safe exploration.</p>
+<p>For agent training, report the complete learning system: task distribution, environment versions, policy initialization, sampling temperature, rollout budget, reward and verifier, masking, advantage estimator, normalization, clipping, optimizer, reference policy, evaluation harness, cost, and forbidden effects. Curves should include variation across seeds or batches when stochastic variation affects the conclusion.</p>
+<h3 id="exercises">Exercises</h3>
+<ol>
+<li>In number search, a policy gives four trajectories probabilities $(0.3,0.2,0.25,0.25)$ and rewards $(1,0,1,0)$. Compute expected reward.</li>
+<li>Prove that a constant baseline does not change the expected score-function gradient for a finite action set.</li>
+<li>Compute centered group advantages for rewards $(1,1,0,0,0)$.</li>
+<li>Explain why an all-failure group gives no update under centered group advantages. Give two remedies and one risk of each.</li>
+<li>A two-step trajectory has rewards $(0.2,1.0)$ and $\gamma=0.9$. Compute $G_0$ and $G_1$.</li>
+</ol>
+<h3 id="solutions-and-discussion">Solutions and discussion</h3>
+<ol>
+<li>The expectation is $0.3(1)+0.2(0)+0.25(1)+0.25(0)=0.55$.</li>
+<li>For constant $b$, the expected baseline term is $b\sum_a\pi_\theta(a)\nabla\log\pi_\theta(a)=b\nabla\sum_a\pi_\theta(a)=b\nabla1=0$.</li>
+<li>The mean is $0.4$, so advantages are $(0.6,0.6,-0.4,-0.4,-0.4)$.</li>
+<li>Every reward equals the mean zero, so every coefficient is zero. Sampling more trajectories may find a success but increases rollout cost. Adding shaped rewards can create signal but risks reward hacking or changing the desired policy. SFT initialization can raise the success rate but may narrow exploration.</li>
+<li>$G_0=0.2+0.9(1)=1.1$ and $G_1=1.0$.</li>
+</ol>
+<h3 id="further-reading">Further reading</h3>
+<ul>
+<li><a href="https://doi.org/10.1007/BF00992696">REINFORCE</a>: the original score-function policy-gradient family.</li>
+<li><a href="https://arxiv.org/abs/2308.08998">Reinforced Self-Training</a>: offline generate-and-improve training.</li>
+<li><a href="https://arxiv.org/abs/2312.06585">ReST-EM</a>: repeated filtered self-training with binary feedback.</li>
+<li><a href="https://arxiv.org/abs/2402.03300">DeepSeekMath</a>: GRPO in language-model reasoning training.</li>
+<li><a href="https://arxiv.org/abs/2503.20783">Understanding R1-Zero-Like Training</a>: critical analysis and DrGRPO.</li>
+<li><a href="http://incompleteideas.net/book/the-book-2nd.html">Sutton and Barto, <em>Reinforcement Learning: An Introduction</em></a>: policies, returns, value functions, and policy gradients.</li>
+</ul><nav class="chapter-nav" aria-label="Chapter navigation"><a class="previous" href="lecture-08-supervised-fine-tuning.html">← Previous: Supervised fine-tuning</a><a class="index" href="index.html">Reading guide</a><span></span></nav></main><aside class="side"><strong>On this page</strong><ul><li><a href="#0-demonstration-likelihood-and-task-reward-are-different-objectives-0000">0. Demonstration likelihood and task reward are different objectives</a></li><li><a href="#1-trajectories-couple-a-policy-to-an-environment-0300">1. Trajectories couple a policy to an environment</a></li><li><a href="#2-why-sft-filtered-self-training-and-rl-differ-1000">2. Why SFT, filtered self-training, and RL differ</a></li><li><a href="#3-the-score-function-identity-gives-the-policy-gradient-3200">3. The score-function identity gives the policy gradient</a></li><li><a href="#4-baselines-reduce-variance-without-changing-expectation-4500">4. Baselines reduce variance without changing expectation</a></li><li><a href="#5-reward-to-go-improves-temporal-credit-assignment-5400">5. Reward-to-go improves temporal credit assignment</a></li><li><a href="#6-group-relative-advantages-compare-samples-for-the-same-task-6300">6. Group-relative advantages compare samples for the same task</a></li><li><a href="#7-on-policy-data-off-policy-reuse-and-stability-7230">7. On-policy data, off-policy reuse, and stability</a></li><li><a href="#8-what-the-derivation-proves-and-what-it-does-not">8. What the derivation proves and what it does not</a></li></ul></aside></div>
+<footer class="foot shell">Independent study material · <a href="index.html#sources">Course attribution and scope</a></footer></body></html>

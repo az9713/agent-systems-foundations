@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent
 
 def main():
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
+        browser = playwright.chromium.launch(channel="chrome", headless=True)
         page = browser.new_page(viewport={"width": 1280, "height": 900})
         for file in [
             ROOT / "index.html",

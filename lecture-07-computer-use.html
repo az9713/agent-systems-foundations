@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Computer use | Agent Systems Foundations</title>
+<style>
+:root {color-scheme:dark;--bg:#0c1018;--panel:#151d2a;--line:#2c3b4f;--text:#e8edf4;--muted:#aab9cc;--accent:#86c5ff;--warm:#ffd395}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:17px/1.68 system-ui,Segoe UI,sans-serif}
+a{color:var(--accent);text-underline-offset:3px}a:hover{color:#b5dcff}.shell{max-width:1180px;margin:auto;padding:0 24px}.top{border-bottom:1px solid var(--line);background:#101722;position:sticky;top:0;z-index:2}.top .shell{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:12px;padding-bottom:12px}.brand{font-weight:800;color:var(--text);text-decoration:none}.top nav{display:flex;gap:14px;flex-wrap:wrap;font-size:.87rem}.top nav a{text-decoration:none}.layout{display:grid;grid-template-columns:minmax(0,780px) 260px;gap:44px;align-items:start}.main{min-width:0;padding:46px 0 100px}.side{position:sticky;top:76px;max-height:calc(100vh - 90px);overflow:auto;padding:35px 0 20px;font-size:.83rem}.side strong{display:block;color:var(--warm);letter-spacing:.08em;text-transform:uppercase}.side ul{list-style:none;padding:0}.side li{margin:9px 0}.side a{text-decoration:none;color:var(--muted)}.side a:hover{color:var(--accent)}h1,h2,h3{line-height:1.2;letter-spacing:-.025em}h1{font-size:clamp(2.2rem,4vw,3.7rem);margin:0 0 22px}h2{font-size:1.7rem;margin:68px 0 18px;border-top:1px solid var(--line);padding-top:25px;scroll-margin-top:80px}h2 a[href*="youtube.com/watch"]{font-size:.58em;font-weight:650;letter-spacing:0;white-space:nowrap;vertical-align:middle}h3{font-size:1.2rem;color:var(--warm);margin:38px 0 12px;scroll-margin-top:80px}p{margin:0 0 1.15em}p:first-of-type{color:var(--muted)}strong{color:#fff}blockquote{border-left:3px solid var(--accent);padding:10px 18px;background:var(--panel);margin:24px 0}table{border-collapse:collapse;width:100%;margin:24px 0 34px;display:block;overflow-x:auto;font-size:.94rem}th,td{border:1px solid var(--line);padding:12px 13px;text-align:left;vertical-align:top}th{background:#192536;color:var(--warm)}tr:nth-child(even) td{background:#121b27}pre{background:#111a27;border:1px solid var(--line);border-radius:10px;padding:20px;overflow-x:auto;color:#d4e8ff;font:14px/1.5 Consolas,monospace}code{font-family:Consolas,monospace;background:#1b293a;padding:1px 4px;border-radius:3px}pre code{background:none;padding:0}ol,ul{padding-left:1.6em}li{margin-bottom:.55em}.MathJax_Display{overflow-x:auto}.hero{background:linear-gradient(135deg,#16243a,#111925);border:1px solid var(--line);border-radius:16px;padding:25px 30px;margin:36px 0}.eyebrow{font-size:.78rem;font-weight:800;color:var(--warm);letter-spacing:.12em;text-transform:uppercase}.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:28px}.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:22px;text-decoration:none;color:var(--text)}.card:hover{border-color:var(--accent);transform:translateY(-2px)}.card b{font-size:1.15rem}.card span{display:block;color:var(--muted);margin-top:8px}.tiny{color:var(--muted);font-size:.85rem}.foot{border-top:1px solid var(--line);padding:24px 0 50px;color:var(--muted);font-size:.85rem}@media(max-width:900px){.layout{display:block}.side{display:none}.main{padding-top:32px}.cards{grid-template-columns:1fr}.top nav{display:none}}@media print{:root{color-scheme:light;--bg:#fff;--panel:#f5f5f5;--line:#ccc;--text:#111;--muted:#333;--accent:#064d8b;--warm:#704600}body{font-size:11pt}.top,.side{display:none}.shell{max-width:none;padding:0}.main{padding:0}h2{break-after:avoid}pre,table{break-inside:avoid}.card{break-inside:avoid}}
+.chapter-nav{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:center;border-block:1px solid var(--line);padding:18px 0;margin:0 0 42px;font-size:.93rem}.chapter-nav:last-child{margin:55px 0 0}.chapter-nav a{display:block;text-decoration:none}.chapter-nav .next{text-align:right}.chapter-nav .index{color:var(--muted)}@media(max-width:600px){.chapter-nav{grid-template-columns:1fr;gap:8px}.chapter-nav .next{text-align:left}}@media print{.chapter-nav{display:none}}
+</style>
+<script>window.MathJax={tex:{inlineMath:[['$','$']],displayMath:[['$$','$$']]},options:{skipHtmlTags:['script','noscript','style','textarea','pre','code']}};</script>
+<script defer src="assets/mathjax-tex-svg.js"></script></head>
+<body><header class="top"><div class="shell"><a class="brand" href="index.html">Agent Systems Foundations</a><nav><a href="lecture-01-agents.html">What are agents?</a><a href="lecture-02-tool-use.html">Tool use</a><a href="lecture-03-long-context.html">Long context</a><a href="lecture-04-memory-and-skills.html">Memory and skills</a><a href="lecture-05-planning.html">Planning and coordination</a><a href="lecture-06-coding-agents.html">Coding agents</a><a href="lecture-07-computer-use.html">Computer use</a><a href="lecture-08-supervised-fine-tuning.html">Supervised fine-tuning</a><a href="lecture-09-reinforcement-learning.html">Reinforcement learning</a><a href="development-journey.html">Development journey</a><a href="textbook-style-report.html">Style study</a></nav></div></header>
+<div class="shell layout"><main class="main"><nav class="chapter-nav" aria-label="Chapter navigation"><a class="previous" href="lecture-06-coding-agents.html">← Previous: Coding agents</a><a class="index" href="index.html">Reading guide</a><a class="next" href="lecture-08-supervised-fine-tuning.html">Next: Supervised fine-tuning →</a></nav><h1 id="lecture-7-computer-use-agents">Lecture 7 — Computer-use agents</h1>
+<p><em>Independent study chapter · Based on a CMU 11-768 lecture by JY Koh, 15 September 2026 · <a href="index.html#sources">Course and attribution</a></em></p>
+<h2 id="0-acting-through-the-human-interface-0130">0. Acting through the human interface <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=90s">01:30</a></h2>
+<p>A user asks an agent to buy a blue mug for less than twenty dollars. The agent observes a rendered screen, finds candidate products, opens a result, checks color and price, and adds an item to a cart. A visually plausible click can hit the wrong control. A correct cart can still contain an unauthorized item. The interface exposes the same pixels a human sees, but it does not supply the semantics and guarantees a programmatic application programming interface (API) would provide.</p>
+<p>A <strong>computer-use agent (CUA)</strong> acts through a graphical user interface (GUI). Let hidden environment state at step $t$ be $s_t\in\mathcal S$. The agent receives observation $o_t=O(s_t)$, where $O$ may produce a screenshot, an accessibility tree, document structure, or a combination. It chooses action $a_t\sim\pi_\theta(\cdot\mid g,o_{\le t},a_{&lt;t})$ for goal $g$. The environment then changes according to</p>
+<p>$$s_{t+1}\sim P_{\rm env}(\cdot\mid s_t,a_t).$$</p>
+<p>The observation is partial. A screenshot does not expose hidden application state, pending network requests, or whether a visual update has committed. The same pixels can correspond to different states, and small rendering changes can move a control.</p>
+<p>Common action types include clicking a point, typing text, pressing a key, scrolling, dragging, waiting, and calling a non-GUI tool. Represent a click as $a=(\text{click},x,y)$, where $(x,y)$ is a coordinate in a declared reference frame. If the model predicts normalized coordinates $(u,v)\in[0,1]^2$ for an image of width $W$ and height $H$, the corresponding pixel coordinate is</p>
+<p>$$x=u(W-1),\qquad y=v(H-1).$$</p>
+<p>The subtraction by one maps $u=1$ to the last pixel index. Device scaling, browser zoom, window movement, and remote-display transforms can invalidate this conversion. A harness should record the screenshot dimensions and transformation used for every coordinate action.</p>
+<p>The loop ends when a verifier accepts the resulting state, the agent requests completion without sufficient evidence, or a budget expires. Model self-declaration is not an outcome verifier.</p>
+<h2 id="1-environments-became-more-realistic-0600">1. Environments became more realistic <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=360s">06:00</a></h2>
+<p>Early GUI environments restricted tasks and interfaces to make interaction reproducible. <a href="https://arxiv.org/abs/1704.04368">MiniWoB++</a> contains small browser tasks. <a href="https://arxiv.org/abs/2207.01206">WebShop</a> models language-guided shopping. Such environments isolate learning problems but simplify state, layout, and consequences.</p>
+<p><a href="https://arxiv.org/abs/2307.13854">WebArena</a> provides reproducible, functional websites and executable goals across several domains. <a href="https://arxiv.org/abs/2401.13649">VisualWebArena</a> adds visually grounded tasks. <a href="https://arxiv.org/abs/2404.07972">OSWorld</a> uses real desktop applications, initial-state setup, and task-specific execution checks. These benchmark designs move evaluation closer to deployed computer use, while still resetting and controlling the environment.</p>
+<p>Real-world use introduces drift. Websites change, sessions expire, pop-ups appear, and applications update. Let $D_{\rm eval}$ be the distribution of states in an evaluation and $D_{\rm deploy}$ the deployment distribution. A reported benchmark success rate estimates performance on $D_{\rm eval}$. It predicts deployment only to the extent that the relevant state-action structure transfers to $D_{\rm deploy}$.</p>
+<p>The correct comparison unit is a complete system: model, observation representation, action schema, prompt, memory, retry policy, environment version, and verifier. Two systems using the same model can differ materially because their coordinate conventions or state representations differ.</p>
+<h2 id="2-static-grounding-and-end-to-end-success-answer-different-questions-1200">2. Static grounding and end-to-end success answer different questions <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=720s">12:00</a></h2>
+<p>A <strong>static evaluation</strong> scores an action against a recorded state without executing it. A <strong>grounding task</strong> asks the model to identify the interface region corresponding to a textual instruction. If the reference rectangle is $B$ and the predicted rectangle is $\widehat B$, their intersection-over-union (IoU) is</p>
+<p>$$\operatorname{IoU}(B,\widehat B)=
+\frac{|B\cap\widehat B|}{|B\cup\widehat B|},$$</p>
+<p>where $|\cdot|$ denotes pixel area. IoU equals one for identical nonempty boxes and zero for disjoint boxes. Point-based benchmarks instead accept a click when it lies inside a target region. <a href="https://arxiv.org/abs/2504.07981">ScreenSpot-Pro</a> evaluates grounding in professional interfaces.</p>
+<p>Static action accuracy is inexpensive and reproducible, but it does not measure recovery or task completion. Several different actions can be valid. A recorded reference action can become inappropriate after an earlier deviation.</p>
+<p>An <strong>end-to-end evaluation</strong> executes the agent from an initial state and checks the resulting environment. Let $\phi_g(s_T)$ be a task-specific predicate that returns one when terminal state $s_T$ satisfies goal $g$ and zero otherwise. Binary success is</p>
+<p>$$Y=\phi_g(s_T).$$</p>
+<p>This measure permits different successful trajectories. Its validity depends on whether $\phi_g$ captures the full goal and exclusions. For “add one blue mug below twenty dollars,” the verifier should check product color, unit price, quantity, cart membership, and absence of checkout. Checking only that a cart is nonempty accepts the wrong state.</p>
+<h3 id="outcome-process-and-evidence">Outcome, process, and evidence</h3>
+<p>Programmatic checks inspect structured application state. A human or vision-language judge can assess open-ended evidence. A <strong>trajectory-aware</strong> verifier also examines how the result was produced. These methods answer different questions.</p>
+<table>
+<thead>
+<tr>
+<th>Verifier</th>
+<th>Strength</th>
+<th>Failure mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Programmatic state check</td>
+<td>precise for encoded properties</td>
+<td>omits unencoded requirements</td>
+</tr>
+<tr>
+<td>Screenshot judge</td>
+<td>flexible for visual outcomes</td>
+<td>can be fooled by appearance</td>
+</tr>
+<tr>
+<td>Human review</td>
+<td>handles ambiguity</td>
+<td>costly and variable</td>
+</tr>
+<tr>
+<td>Trajectory audit</td>
+<td>detects forbidden process</td>
+<td>long traces and hidden effects</td>
+</tr>
+</tbody>
+</table>
+<p>For high-consequence tasks, use independent state evidence rather than only the agent's final screenshot. A screenshot can show “Saved” even when a later synchronization fails.</p>
+<h2 id="3-long-horizon-tasks-need-partial-but-non-gameable-feedback-3330">3. Long-horizon tasks need partial but non-gameable feedback <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=2010s">33:30</a></h2>
+<p>Hours-long tasks often produce meaningful intermediate artifacts. A binary terminal reward discards that information. A <strong>rubric</strong> contains criteria $j=1,\ldots,m$, weights $w_j\ge0$, and checks $c_j\in\{0,1\}$. Its normalized score is</p>
+<p>$$R_{\rm rubric}=\frac{\sum_{j=1}^m w_jc_j}{\sum_{j=1}^m w_j},$$</p>
+<p>provided the denominator is positive. The score lies in $[0,1]$. Each criterion must describe an outcome that can be inspected independently.</p>
+<p>Suppose a spreadsheet task awards weights 4 for correct values, 2 for formulas rather than pasted constants, 1 for formatting, and 3 for preserving unrelated sheets. An agent satisfying the first three but damaging another sheet receives $7/10$. Whether that score should count as success is a separate decision. Preservation may be a hard constraint rather than compensable reward.</p>
+<p>The companion function checks that weights and criteria have identical names:</p>
+<pre><code class="language-python">from agent_lab.evaluation import rubric_score
+
+score = rubric_score(
+    {&quot;values&quot;: 4, &quot;formulas&quot;: 2, &quot;format&quot;: 1, &quot;preserve&quot;: 3},
+    {&quot;values&quot;: True, &quot;formulas&quot;: True, &quot;format&quot;: True,
+     &quot;preserve&quot;: False},
+)
+assert score == 0.7
+</code></pre>
+<p>Rubric design can create reward hacking. If a criterion checks only that a file exists, the agent may create an empty or corrupt file. If intermediate rewards are given for opening the right application, the agent can repeat that step. Criteria should be outcome-based, nonduplicative, and tested against adversarial near-misses.</p>
+<p><a href="https://odysseys-website.pages.dev/">Odysseys</a> studies long-horizon live-web tasks with rubric-based judging. Later desktop benchmarks add partial checks for complex artifacts. Results from a dated live-web benchmark can drift as sites change, so the environment and evaluation date are part of the claim.</p>
+<h2 id="4-observation-and-action-representations-define-the-interface-4630">4. Observation and action representations define the interface <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=2790s">46:30</a></h2>
+<p>A screenshot represents every visible pixel but makes text and element identity implicit. An accessibility tree exposes roles, names, and hierarchy but can omit custom-rendered controls or visual relations. Hypertext markup language (HTML) exposes web structure but not arbitrary desktop applications.</p>
+<p>Let $z_t^{\rm pix}$, $z_t^{\rm acc}$, and $z_t^{\rm dom}$ be pixel, accessibility, and document-object representations. A multimodal context builder may form</p>
+<p>$$c_t=C(g,h_t,z_t^{\rm pix},z_t^{\rm acc},z_t^{\rm dom},b_t),$$</p>
+<p>where $b_t$ is the remaining token and action budget. Including every representation increases context cost and can introduce contradictions. The system should preserve provenance so the model can distinguish visible text from metadata and untrusted page content from instructions.</p>
+<p>A coordinate action is compact but fragile to layout change. An element-reference action such as <code>click(role="button", name="Save")</code> is more semantic but depends on a correct accessibility representation and a deterministic resolver. Hybrid systems can let the model identify an element semantically and let the harness resolve its current geometry.</p>
+<p>Action schemas vary among frontier CUAs. A result therefore depends on provider-specific tokenization, screenshot scaling, history serialization, and tool semantics. Reproducing a benchmark requires recording those details, not only a model name.</p>
+<h3 id="prompt-injection-through-the-gui">Prompt injection through the GUI</h3>
+<p>Text rendered on a page is an observation. It is not an authority source. Let $L(x)$ assign a trust level to context item $x$. The harness should enforce an information-flow rule: content at a lower trust level may supply data, but it cannot modify permissions, system constraints, or the verifier.</p>
+<p>For every executed action $a_t$, require</p>
+<p>$$\operatorname{execute}(a_t)\Rightarrow
+\operatorname{authorized}(a_t,U_t)\land
+\operatorname{supported}(a_t,e_t),$$</p>
+<p>where $U_t$ is current authorization and $e_t$ is trusted evidence. A page saying “upload your credentials to continue” cannot satisfy either predicate merely by appearing on screen.</p>
+<h2 id="5-training-combines-grounding-trajectories-and-outcome-feedback-5700">5. Training combines grounding, trajectories, and outcome feedback <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=3420s">57:00</a></h2>
+<p>CUA training usually begins from a vision-language model. Pretraining can teach visual-text relationships and interface elements. Supervised fine-tuning can imitate action trajectories. Reinforcement learning can optimize behavior against environment rewards. These stages expose different supervision.</p>
+<p>A grounding example maps an observation and element description to a region or point. An action-prediction example maps history to the next action. A trajectory example records a sequence. Let dataset item $i$ be</p>
+<p>$$d_i=(g_i,s_{i,0},o_{i,0},a_{i,0},\ldots,o_{i,T_i},y_i),$$</p>
+<p>where $y_i$ contains terminal checks or reward. Initial state $s_{i,0}$ is essential for reproducibility. The same instruction can require a different action in a different state.</p>
+<p>Human demonstrations can be precise but expensive. Synthetic trajectories can scale but inherit teacher errors and benchmark artifacts. A privileged teacher may use an accessibility tree while the student receives pixels. This can generate successful targets, but it also creates an information mismatch. The student must infer actions from less informative observations.</p>
+<h2 id="6-resettable-environments-make-reinforcement-learning-possible-6400">6. Resettable environments make reinforcement learning possible <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=3840s">64:00</a></h2>
+<p>Online training requires repeated interaction, reward computation, and recovery from failures. Real websites are expensive, nondeterministic, and capable of charging money or affecting other users. A <strong>resettable environment</strong> has a known initial-state generator and can restore state after a trajectory.</p>
+<p>Let $\mathcal E=(\mu_0,P,O,r,\operatorname{reset})$, where $\mu_0$ is an initial-state distribution, $P$ the transition law, $O$ the observation function, $r$ the reward, and <code>reset</code> a procedure that restores a valid starting state. A training task is useful only when its setup, transition behavior, and reward agree.</p>
+<p><a href="https://arxiv.org/abs/2605.25624">CUA-Gym</a> generates mock applications, tasks, initial states, and reward logic. <a href="https://arxiv.org/abs/2604.06126">Gym-Anything</a> targets broader software environments. Synthetic scale does not remove validation: the generator can create impossible tasks, leaking verifiers, or shortcuts absent from real applications.</p>
+<p>Separate environment-generation tests from agent training. For each generated task, execute a known successful trace, execute adversarial failing traces, verify reset determinism within stated limits, and confirm that forbidden external effects are unreachable.</p>
+<h2 id="7-deployment-adds-speed-personalization-and-control-7200">7. Deployment adds speed, personalization, and control <a href="https://www.youtube.com/watch?v=jwGluLrrqjQ&amp;t=4320s">72:00</a></h2>
+<p>CUA latency accumulates across screenshots, model calls, rendering, and actions. If step $t$ has observation latency $d_t^{\rm obs}$, inference latency $d_t^{\rm model}$, and action latency $d_t^{\rm act}$, total time is</p>
+<p>$$D=\sum_{t=0}^{T-1}
+(d_t^{\rm obs}+d_t^{\rm model}+d_t^{\rm act}).$$</p>
+<p>Parallel workers reduce time only for independent state. Two agents controlling one cursor can interfere. Chapter 5's work–span bound applies after the plan includes shared-interface constraints.</p>
+<p>Personalization supplies user preferences and context. It also increases privacy risk and the chance that stale memory affects action. Store provenance, scope, and expiration. A preference does not imply permission to transact.</p>
+<p>Proactive background use needs visible state, bounded authority, an interruption mechanism, and durable evidence. The user should be able to inspect what is running, what action is proposed, and how to stop it. A polished GUI animation is not a substitute for an auditable event record.</p>
+<h3 id="the-observation-channel-creates-an-information-bottleneck">The observation channel creates an information bottleneck</h3>
+<p>Let the hidden interface state be $s_t$. The agent receives observation $o_t=\phi(s_t)$ through an observation function $\phi$. A screenshot, an accessibility tree, and a document-object-model snapshot use different functions $\phi$ and therefore preserve different information. A screenshot preserves pixels and spatial layout but does not directly expose semantic roles. An accessibility tree exposes roles, names, and hierarchy but may omit canvas content or custom controls. A structured web representation exposes machine-readable elements but can diverge from what the user sees.</p>
+<p>An observation is <strong>sufficient</strong> for a decision when it preserves all state distinctions that can change the best action. Formally, for two hidden states $s$ and $s&#x27;$ with the same observation, $\phi(s)=\phi(s&#x27;)$, sufficiency requires the same optimal action set:</p>
+<p>$$\operatorname*{arg\,max}_{a}Q(s,a)
+=\operatorname*{arg\,max}_{a}Q(s&#x27;,a),$$</p>
+<p>where $Q(s,a)$ is the expected future task value after taking action $a$ in state $s$. This condition usually fails for a single screenshot. Two identical-looking dialogs may belong to different applications, accounts, or security contexts. The harness can restore information by adding trusted metadata, querying the active application, or requiring confirmation before a consequential action.</p>
+<h3 id="coordinate-actions-amplify-small-grounding-errors">Coordinate actions amplify small grounding errors</h3>
+<p>Suppose the intended target occupies rectangle $B$ and the agent predicts click point $(\hat x,\hat y)$. A strict grounding score is</p>
+<p>$$g=\mathbf 1[(\hat x,\hat y)\in B],$$</p>
+<p>where $\mathbf 1[\cdot]$ equals $1$ when its condition is true and $0$ otherwise. This score hides the margin to failure. Define $d((\hat x,\hat y),\partial B)$ as the distance from the predicted point to the target boundary $\partial B$. A positive, large margin is more robust to display scaling, layout motion, and motor noise than a click barely inside the box.</p>
+<p>Before execution, the agent should re-observe when the interface may have moved. After execution, it should verify the resulting state rather than infer success from the click itself. This creates a three-step micro-policy: locate, act, verify. The same pattern applies to typing into a field, dragging an object, or selecting a menu item.</p>
+<h3 id="control-should-depend-on-consequence-uncertainty-and-reversibility">Control should depend on consequence, uncertainty, and reversibility</h3>
+<p>Let $p_t$ be the estimated probability that the proposed action is correct, let $L_t$ be the loss if it is wrong, and let $r_t\in[0,1]$ measure reversibility, with $1$ meaning fully reversible. A simple escalation score is</p>
+<p>$$E_t=(1-p_t)L_t(1-r_t).$$</p>
+<p>The score is a decision aid, not a safety proof. A policy may execute automatically only below threshold $\eta_1$, request a fresh observation between $\eta_1$ and $\eta_2$, and require human approval above $\eta_2$. Some actions, such as disclosing a secret or confirming a purchase, should remain hard-gated regardless of the score because their constraints are noncompensable.</p>
+<p>Benchmarks such as <a href="https://arxiv.org/abs/2307.13854">WebArena</a> and <a href="https://arxiv.org/abs/2404.07972">OSWorld</a> provide reproducible environments and end-state evaluators for web and desktop tasks. Their controlled accounts and reset mechanisms are part of the measurement apparatus. Deployment adds live credentials, personalized state, changing layouts, prompt injection, and actions that cannot simply be reset. The benchmark score therefore estimates capability under its environment distribution. It does not establish safe autonomy in a user's actual computer.</p>
+<h2 id="8-what-the-abstraction-captures-and-misses">8. What the abstraction captures and misses</h2>
+<p>The partially observed control model explains why screenshot interpretation, action grounding, and verification are separate problems. It omits human motor conventions, application-specific recovery, adversarial interfaces, and social consequences. Benchmarks further simplify account state, policy restrictions, and irreversible actions.</p>
+<p>Evaluation should report at least task success, partial progress, forbidden effects, latency, model and environment cost, human intervention, and verifier uncertainty. A benchmark score can establish performance only under its stated environment and verifier.</p>
+<h3 id="exercises">Exercises</h3>
+<ol>
+<li>A model predicts normalized click $(0.25,0.75)$ on a 1440-by-900 screenshot. Compute the continuous pixel coordinate under the chapter's convention.</li>
+<li>Design a verifier for “create an empty repository named <code>agent-notes</code>.” Give one insufficient check and one adversarial near-miss.</li>
+<li>A rubric has weights $(5,3,2)$ and checks $(1,0,1)$. Compute its score. Which criterion might need to be a hard constraint instead?</li>
+<li>Compare screenshot-only, accessibility-only, and hybrid representations for a custom canvas application.</li>
+</ol>
+<h3 id="solutions-and-discussion">Solutions and discussion</h3>
+<ol>
+<li>The coordinate is $(0.25\times1439,0.75\times899)=(359.75,674.25)$. The harness must specify how it rounds to integer device coordinates.</li>
+<li>Check repository existence, exact name, owner, visibility, emptiness, and absence of unrelated mutations. Checking only that a page contains the name is insufficient. A text file or issue titled <code>agent-notes</code> is an adversarial near-miss.</li>
+<li>The score is $(5+0+2)/10=0.7$. If the failed criterion represents “no unauthorized transaction” or preservation of existing data, it should be a hard constraint rather than compensable reward.</li>
+<li>Pixels capture the canvas but hide element semantics. Accessibility metadata may expose no useful canvas children. A hybrid can use pixels for grounding and semantic metadata for surrounding controls, with provenance and fallback behavior.</li>
+</ol>
+<h3 id="further-reading">Further reading</h3>
+<ul>
+<li><a href="https://arxiv.org/abs/2307.13854">WebArena</a>: reproducible web environments with functional evaluation.</li>
+<li><a href="https://arxiv.org/abs/2401.13649">VisualWebArena</a>: visually grounded web tasks.</li>
+<li><a href="https://arxiv.org/abs/2404.07972">OSWorld</a>: real desktop applications and execution-based checks.</li>
+<li><a href="https://arxiv.org/abs/2306.06070">Mind2Web</a>: generalist web-agent data and offline evaluation.</li>
+<li><a href="https://arxiv.org/abs/2508.09123">OpenCUA</a>: open foundations for computer-use agents.</li>
+<li><a href="https://arxiv.org/abs/2605.25624">CUA-Gym</a>: generated, resettable environments for training.</li>
+</ul><nav class="chapter-nav" aria-label="Chapter navigation"><a class="previous" href="lecture-06-coding-agents.html">← Previous: Coding agents</a><a class="index" href="index.html">Reading guide</a><a class="next" href="lecture-08-supervised-fine-tuning.html">Next: Supervised fine-tuning →</a></nav></main><aside class="side"><strong>On this page</strong><ul><li><a href="#0-acting-through-the-human-interface-0130">0. Acting through the human interface</a></li><li><a href="#1-environments-became-more-realistic-0600">1. Environments became more realistic</a></li><li><a href="#2-static-grounding-and-end-to-end-success-answer-different-questions-1200">2. Static grounding and end-to-end success answer different questions</a></li><li><a href="#3-long-horizon-tasks-need-partial-but-non-gameable-feedback-3330">3. Long-horizon tasks need partial but non-gameable feedback</a></li><li><a href="#4-observation-and-action-representations-define-the-interface-4630">4. Observation and action representations define the interface</a></li><li><a href="#5-training-combines-grounding-trajectories-and-outcome-feedback-5700">5. Training combines grounding, trajectories, and outcome feedback</a></li><li><a href="#6-resettable-environments-make-reinforcement-learning-possible-6400">6. Resettable environments make reinforcement learning possible</a></li><li><a href="#7-deployment-adds-speed-personalization-and-control-7200">7. Deployment adds speed, personalization, and control</a></li><li><a href="#8-what-the-abstraction-captures-and-misses">8. What the abstraction captures and misses</a></li></ul></aside></div>
+<footer class="foot shell">Independent study material · <a href="index.html#sources">Course attribution and scope</a></footer></body></html>
